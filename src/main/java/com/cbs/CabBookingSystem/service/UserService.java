@@ -4,15 +4,23 @@ import com.cbs.CabBookingSystem.dto.UserRegistrationDto;
 import com.cbs.CabBookingSystem.model.User;
 import com.cbs.CabBookingSystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
 
-//    public User registerUser(UserRegistrationDto registrationDto) {
-//        User user = new User();
-////        user.setFirstName(registrationDto.getName());
-//    }
+    public User registerUser(UserRegistrationDto registrationDto) {
+        User user = new User();
+        user.setFirstName(registrationDto.getFirstName());
+        user.setLastName(registrationDto.getLastName());
+        user.setEmail(registrationDto.getEmail());
+        user.setPhone(registrationDto.getPhone());
+        user.setPasswordHash(registrationDto.getPasswordHash());
+        return userRepository.save(user);
+    }
+
 
 }

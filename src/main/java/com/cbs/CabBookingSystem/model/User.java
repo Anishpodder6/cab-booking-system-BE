@@ -2,6 +2,7 @@ package com.cbs.CabBookingSystem.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -32,4 +33,7 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    public User() {
+        this.createdAt=LocalDateTime.now();
+    }
 }
