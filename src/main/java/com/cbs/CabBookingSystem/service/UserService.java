@@ -7,6 +7,8 @@ import com.cbs.CabBookingSystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
 
@@ -29,4 +31,7 @@ public class UserService {
     }
 
 
+    public User getUserProfileById(Long userId) {
+        return userRepository.findById(userId).orElse(null);
+    }
 }

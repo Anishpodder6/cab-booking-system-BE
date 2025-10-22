@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "http://localhost:4200/")
@@ -39,6 +41,18 @@ public class RiderController {
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
         }
+    }
+
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<?> getUserProfileById(@PathVariable Long userId){
+        User user = userService.getUserProfileById(userId);
+
+        if(user != null) {
+            user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>("User not found with ID : " + userId,HttpStatus.NOT_FOUND);
     }
 
 }
