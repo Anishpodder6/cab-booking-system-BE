@@ -27,7 +27,7 @@ public class UserRegistrationDto {
     @NotBlank
     private String passwordHash;
 
-    @NotBlank
+//    @NotBlank
     private LocalDateTime createdAt;
 
 }

@@ -1,6 +1,7 @@
 package com.cbs.CabBookingSystem.service;
 
 import com.cbs.CabBookingSystem.dto.UserRegistrationDto;
+import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.User;
 import com.cbs.CabBookingSystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,11 @@ public class UserService {
         user.setPhone(registrationDto.getPhone());
         user.setPasswordHash(registrationDto.getPasswordHash());
         return userRepository.save(user);
+    }
+    
+    public User findUserByEmail(String email){
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
 
 
