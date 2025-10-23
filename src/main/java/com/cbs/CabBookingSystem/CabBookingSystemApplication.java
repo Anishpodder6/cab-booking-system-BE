@@ -10,5 +10,4 @@ public class CabBookingSystemApplication {
 		SpringApplication.run(CabBookingSystemApplication.class, args);
 		System.out.println("hello");
 	}
-
 }
