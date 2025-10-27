@@ -2,6 +2,7 @@ package com.cbs.CabBookingSystem.controller;
 
 import com.cbs.CabBookingSystem.dto.UserLoginDto;
 import com.cbs.CabBookingSystem.dto.UserRegistrationDto;
+import com.cbs.CabBookingSystem.dto.UserUpdateDto;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.User;
 import com.cbs.CabBookingSystem.service.UserService;
@@ -11,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -44,15 +43,57 @@ public class RiderController {
     }
 
     @GetMapping("/profile/{userId}")
-    public ResponseEntity<?> getUserProfileById(@PathVariable Long userId){
-        User user = userService.getUserProfileById(userId);
+    public ResponseEntity<?> getUserProfileById(@PathVariable Long userId) {
+        User user = null;
 
-        if(user != null) {
-            user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
-            return new ResponseEntity<>(user, HttpStatus.OK);
+        try {
+          user = userService.findUserById(userId);
+            if (user != null) {
+                user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
+                return new ResponseEntity<>(user, HttpStatus.OK);
+            }
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+
+    @PutMapping("/profile/{userId}")
+    public ResponseEntity<?> updateUserProfileById(@RequestBody @Valid UserUpdateDto userUpdateDto, @PathVariable Long userId) {
+
+        try {
+            User updatedUser = userService.updateUserProfileById(userUpdateDto, userId);
+            if (updatedUser == null) {
+                return new ResponseEntity<>("User with ID " + userId + " not found.", HttpStatus.NOT_FOUND);
+            }
+            updatedUser.setPasswordHash(null);
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/profile/{userId}")
+    public ResponseEntity<String> deleteUserById(@PathVariable Long userId){
+        User getUser = null;
+
+        try {
+            getUser = userService.findUserById(userId);
+
+            if (getUser != null) {
+                userService.deleteUserById(userId);
+            }
+            return new ResponseEntity<>("User deleted succesfully", HttpStatus.OK);
+
+        } catch (ResourceNotFoundException e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
 
-        return new ResponseEntity<>("User not found with ID : " + userId,HttpStatus.NOT_FOUND);
     }
+
+//    @GetMapping("/allDetails/{userId}")
+//    public ResponseEntity<>
 
 }

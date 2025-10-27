@@ -1,6 +1,7 @@
 package com.cbs.CabBookingSystem.service;
 
 import com.cbs.CabBookingSystem.dto.UserRegistrationDto;
+import com.cbs.CabBookingSystem.dto.UserUpdateDto;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.User;
 import com.cbs.CabBookingSystem.repository.UserRepository;
@@ -30,8 +31,24 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
 
+    public User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID : " + userId));
+    }
 
-    public User getUserProfileById(Long userId) {
-        return userRepository.findById(userId).orElse(null);
+    public User updateUserProfileById(UserUpdateDto userUpdateDto, Long userId) {
+
+        User existingUser = findUserById(userId);
+
+        existingUser.setFirstName(userUpdateDto.getFirstName());
+        existingUser.setLastName(userUpdateDto.getLastName());
+        existingUser.setPhone(userUpdateDto.getPhone());
+
+        return userRepository.save(existingUser);
+    }
+
+
+    public void deleteUserById(Long userId) {
+        userRepository.deleteById(userId);
     }
 }
