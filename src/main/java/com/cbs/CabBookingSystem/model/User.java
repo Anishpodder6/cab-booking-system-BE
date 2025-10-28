@@ -33,7 +33,4 @@ public class User {
 
     private LocalDateTime createdAt;
 
-    public User() {
-        this.createdAt=LocalDateTime.now();
-    }
 }
