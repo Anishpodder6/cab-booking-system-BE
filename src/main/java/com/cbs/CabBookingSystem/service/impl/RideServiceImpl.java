@@ -4,26 +4,46 @@ import com.cbs.CabBookingSystem.dto.RideDto;
 import com.cbs.CabBookingSystem.exception.customexception.AlreadyRideAssignedException;
 import com.cbs.CabBookingSystem.exception.customexception.RideNotFound;
 import com.cbs.CabBookingSystem.model.Ride;
-import com.cbs.CabBookingSystem.model.enums.PaymentMethod;
 import com.cbs.CabBookingSystem.model.enums.RideStatus;
 import com.cbs.CabBookingSystem.repository.RideRepository;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate; // Specific import for pushing messages
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+<<<<<<< HEAD
 import java.util.UUID;
+=======
+import java.util.Objects; // Specific import
+>>>>>>> 96a4132 (Added websocket connection)
 
 @RequiredArgsConstructor
 @Service
 public class RideServiceImpl implements RideService {
 
     private final RideRepository rideRepository;
+    private final SimpMessagingTemplate messagingTemplate; // <-- Injected for WebSocket communication
+
     @Autowired
     private ModelMapper modelMapper;
+
+    /**
+     * Helper method to push the updated Ride object to the client.
+     * The destination must match the Angular client's subscription path.
+     * We use a generic '/topic/rides' prefix for simplicity, assuming the
+     * WebSocket configuration will route this correctly, matching the Angular client's URL.
+     */
+    private void pushRideUpdate(Long rideId, Ride ride) {
+        // Matches Angular subscription topic: /topic/rides/{rideId}
+        String destination = "/topic/rides/" + rideId;
+        messagingTemplate.convertAndSend(destination, ride);
+    }
+
+    // --- CRUD Operations ---
 
     @Override
     public Ride addRide(RideDto rideDto) {
@@ -40,7 +60,12 @@ public class RideServiceImpl implements RideService {
     public Ride updateRideStatus(Long rideId, String status) throws RideNotFound{
         Ride existingRide = rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
         existingRide.setStatus(RideStatus.valueOf(status));
-        return rideRepository.save(existingRide);
+        Ride updatedRide = rideRepository.save(existingRide);
+
+        // REACTIVE UPDATE: Push the change
+        pushRideUpdate(rideId, updatedRide);
+
+        return updatedRide;
     }
 
     @Override
@@ -66,25 +91,37 @@ public class RideServiceImpl implements RideService {
                     if (value == null || "null".equalsIgnoreCase(String.valueOf(value))) {
                         existingRide.setDriverId(null); // explicitly set to null
                     } else {
-                        boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
+                        // Check if driverId is actually changing to prevent unnecessary exceptions
+                        if (!Objects.equals(existingRide.getDriverId(), Long.valueOf(String.valueOf(value)))) {
+                            boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
 
-                        if (isRideAssignedAlready) {
-                            throw new AlreadyRideAssignedException("Ride is Already Assigned");
+                            if (isRideAssignedAlready) {
+                                throw new AlreadyRideAssignedException("Ride is Already Assigned");
+                            }
+                            existingRide.setDriverId(Long.valueOf(String.valueOf(value)));
+                            existingRide.setStatus(RideStatus.ConfirmedByDriver);
                         }
+<<<<<<< HEAD
                         existingRide.setDriverId((UUID)value);
                         existingRide.setStatus(RideStatus.ConfirmedByDriver);
+=======
+>>>>>>> 96a4132 (Added websocket connection)
                     }
                 }
                 case "carType" -> existingRide.setCarType((String) value);
                 case "fare" -> existingRide.setFare(Double.valueOf(String.valueOf(value)));
                 case "status" -> existingRide.setStatus(RideStatus.valueOf((String) value));
-//                case "paymentMethod" -> existingRide.setPaymentMethod(PaymentMethod.valueOf((String) value));
+                // case "paymentMethod" -> existingRide.setPaymentMethod(PaymentMethod.valueOf((String) value));
                 default -> throw new IllegalStateException("Unexpected value: " + key);
             }
         });
 
-        return rideRepository.save(existingRide);
+        Ride updatedRide = rideRepository.save(existingRide);
 
+        // REACTIVE UPDATE: Push the change
+        pushRideUpdate(rideId, updatedRide);
+
+        return updatedRide;
     }
 
     @Override
@@ -98,9 +135,14 @@ public class RideServiceImpl implements RideService {
         existingRide.setCarType(rideDto.getCarType());
         existingRide.setFare(rideDto.getFare());
         existingRide.setStatus(rideDto.getStatus());
-//        existingRide.setPaymentMethod(rideDto.getPaymentMethod());
+        // existingRide.setPaymentMethod(rideDto.getPaymentMethod());
 
-        return rideRepository.save(existingRide);
+        Ride updatedRide = rideRepository.save(existingRide);
+
+        // REACTIVE UPDATE: Push the change
+        pushRideUpdate(rideId, updatedRide);
+
+        return updatedRide;
     }
 
     @Override
@@ -122,8 +164,17 @@ public class RideServiceImpl implements RideService {
 
         rideRepository.updateDriverIdByRideId(rideId, driverId);
 
+        // After assigning a driver via raw repository method, we need to fetch the updated entity
+        // to push the complete, updated Ride object.
+        Ride updatedRide = getRideById(rideId);
+
+        // REACTIVE UPDATE: Push the change
+        pushRideUpdate(rideId, updatedRide);
+
         return true;
     }
+
+    // --- Retrieval Methods ---
 
     @Override
     public List<Ride> getRiderUpcomingRide(UUID userId) {

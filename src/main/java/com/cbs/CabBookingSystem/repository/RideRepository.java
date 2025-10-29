@@ -25,10 +25,12 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     @Query("UPDATE Ride r SET r.driverId = :driverId WHERE r.rideId = :rideId")
     void updateDriverIdByRideId(Long rideId, Long driverId);
 
+
     @Query("""
         SELECT r FROM Ride r 
         WHERE r.driverId IS NULL 
         AND r.status NOT IN ('CancelledByUser', 'Ongoing', 'Completed') 
+        AND FUNCTION('DATE', r.dateTime) = CURRENT_DATE
         ORDER BY r.dateTime ASC
     """)
     List<Ride> findUnassignedRides();
@@ -37,10 +39,12 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
      * 2. Fetches upcoming rides for a specific rider (user).
      * Criteria: userId matches the requested userId AND rideStatus NOT IN ('CancelledByUser', 'Completed')
      */
+
     @Query("""
         SELECT r FROM Ride r 
         WHERE r.userId = :userId 
-        AND r.status NOT IN ('CancelledByUser', 'Completed') 
+        AND DATE(r.dateTime) = CURRENT_DATE 
+        AND r.status NOT IN ('Completed', 'CancelledByUser')
         ORDER BY r.dateTime ASC
     """)
     List<Ride> findRiderUpcomingRides(UUID userId);
@@ -49,10 +53,12 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
      * 3. Fetches upcoming rides for a specific driver.
      * Criteria: driverId matches the requested userId AND rideStatus IN ('ConfirmedByDriver', 'Ongoing')
      */
+
     @Query("""
         SELECT r FROM Ride r 
         WHERE r.driverId = :userId 
-        AND r.status IN ('ConfirmedByDriver', 'Ongoing', 'CancelledByUser') 
+        AND DATE(r.dateTime) = CURRENT_DATE 
+        AND r.status IN ('ConfirmedByDriver', 'Ongoing')
         ORDER BY r.dateTime ASC
     """)
     List<Ride> findDriverUpcomingRides(UUID userId);
