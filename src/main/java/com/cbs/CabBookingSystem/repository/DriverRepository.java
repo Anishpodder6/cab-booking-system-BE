@@ -15,5 +15,5 @@ public interface DriverRepository extends JpaRepository<Driver, UUID> {
     List<Driver> findByStatus(DriverStatus status);
 
     // NEW: Custom method to find a Driver by email for login/validation purposes
-    List<Driver> findByPersonalDetailsEmail(String email);
+    Optional<Driver> findByPersonalDetailsEmail(String email);
 }

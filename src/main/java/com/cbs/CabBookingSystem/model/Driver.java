@@ -1,14 +1,21 @@
 package com.cbs.CabBookingSystem.model;
 
+import com.cbs.CabBookingSystem.model.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "drivers") // Recommended to name your table in plural
 @Data
-public class Driver {
+public class Driver implements UserDetails {
 
     // Matches the "id": "ded4" format from your JSON. Uses UUID internally.
     @Id
@@ -33,11 +40,14 @@ public class Driver {
 
     // Enum for role is better practice
     @Enumerated(EnumType.STRING)
-    private DriverRole role = DriverRole.DRIVER; // Default to 'DRIVER'
+    private DriverRole driverRole = DriverRole.DRIVER; // Default to 'DRIVER'
 
     // New field for the PUT API: /api/drivers/status/{id}
     @Enumerated(EnumType.STRING)
     private DriverStatus status = DriverStatus.UNAVAILABLE;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.DRIVER;
 
     // Timestamps
 //    @Temporal(TemporalType.INSTANT)
@@ -64,5 +74,40 @@ public class Driver {
         if (personalDetails != null) {
             this.name = personalDetails.getFirstName() + " " + personalDetails.getLastName();
         }
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public String getPassword() {
+        return personalDetails.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return personalDetails.getEmail();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
     }
 }

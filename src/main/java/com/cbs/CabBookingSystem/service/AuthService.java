@@ -2,30 +2,66 @@ package com.cbs.CabBookingSystem.service;
 
 import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.model.*;
+import com.cbs.CabBookingSystem.model.enums.UserRole;
 import com.cbs.CabBookingSystem.repository.DriverRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cbs.CabBookingSystem.repository.UserRepository;
+import com.cbs.CabBookingSystem.util.JwtUtil;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.time.LocalDate;
 
 @Service
-public class DriverService {
+public class AuthService {
 
-    @Autowired
-    private DriverRepository driverRepository;
 
-    // ==========================================================
-    //                        HELPER METHODS
-    // ==========================================================
+    private final UserRepository userRepository;
+    private final DriverRepository driverRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsServiceImpl userDetailsService;
 
-    /**
-     * Converts a DriverRegistrationDTO (API Request) to a Driver Entity (JPA/Database).
-     * @param dto The registration data received from the controller.
-     * @return The Driver entity ready for persistence.
-     */
+    public AuthService(UserRepository userRepository, DriverRepository driverRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService) {
+        this.userRepository = userRepository;
+        this.driverRepository = driverRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+    }
+
+    public RiderRegistrationResponseDTO registerRider(UserRegistrationDto userRegistrationDto) {
+        User rider = new User();
+        rider.setFirstName(userRegistrationDto.getFirstName());
+        rider.setLastName(userRegistrationDto.getLastName());
+        rider.setEmail(userRegistrationDto.getEmail());
+        rider.setPhone(userRegistrationDto.getPhone());
+        rider.setPasswordHash(passwordEncoder.encode(userRegistrationDto.getPasswordHash()));
+        rider.setRole(UserRole.RIDER);
+        User user = userRepository.save(rider);
+        return new RiderRegistrationResponseDTO(user);
+    }
+
+    public UserDetails loginUser(LoginRequestDTO loginDTO) {
+        try {
+            // 1. Explicitly load user by email and role
+            UserDetails userDetails = userDetailsService.loadUserByEmailAndRole(loginDTO.email(), loginDTO.userRole());
+
+            // 2. Manual BCrypt password check
+            if (passwordEncoder.matches(loginDTO.passwordHash(), userDetails.getPassword())) {
+                return userDetails;
+            } else {
+                throw new IllegalArgumentException("Invalid password.");
+            }
+        } catch (UsernameNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            // Catches "Invalid password"
+            throw new IllegalArgumentException("Invalid credentials.");
+        }
+    }
+
+
+
     private Driver convertToEntity(DriverRegistrationDTO dto) {
         Driver driver = new Driver();
 
@@ -38,8 +74,8 @@ public class DriverService {
         pd.setDateOfBirth(dto.getPersonalDetails().getDateOfBirth());
         // Note: Passwords stored in plain text for this exercise only.
         // Use BCrypt in production!
-        pd.setPassword(dto.getPersonalDetails().getPassword());
-        pd.setConfirmPassword(dto.getPersonalDetails().getConfirmPassword());
+        pd.setPassword(passwordEncoder.encode(dto.getPersonalDetails().getPassword()));
+        pd.setConfirmPassword(passwordEncoder.encode(dto.getPersonalDetails().getConfirmPassword()));
         driver.setPersonalDetails(pd);
 
         // Map Driver Details
@@ -134,50 +170,5 @@ public class DriverService {
         Driver driver = convertToEntity(registrationDTO);
         Driver savedDriver = driverRepository.save(driver);
         return convertToDto(savedDriver);
-    }
-
-    // 4. POST /api/drivers/login (MODIFIED)
-//    public Optional<DriverResponseDTO> loginDriver(DriverLoginDTO loginDTO) {
-//        // 1. Find driver(s) by email - now returns a List
-//        List<Driver> drivers = driverRepository.findByPersonalDetailsEmail(loginDTO.getEmail());
-//
-//        // Check if no driver was found
-//        if (drivers.isEmpty()) {
-//            return Optional.empty(); // No driver found
-//        }
-//
-//        // 🚨 Critical Note on Duplicates:
-//        // We will take the first result, but the *real* fix is ensuring email uniqueness
-//        // in your Driver model (using @Column(unique = true)) and database.
-//        Driver driver = drivers.get(0);
-//
-//        // 2. Basic Password Check
-//        if (driver.getPersonalDetails().getPassword().equals(loginDTO.getPassword())) {
-//            // Login successful
-//            return Optional.of(convertToDto(driver));
-//        } else {
-//            return Optional.empty(); // Password mismatch
-//        }
-//    }
-    /**
-     * 3. GET /api/drivers/available
-     * Finds all drivers with the AVAILABLE status and returns them as a list of DTOs.
-     */
-    public List<DriverResponseDTO> getAvailableDrivers() {
-        return driverRepository.findByStatus(DriverStatus.AVAILABLE).stream()
-                .map(this::convertToDto) // Convert each entity to a DTO
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 4. PUT /api/drivers/status/{id}
-     * Finds driver by ID, updates status, saves it, and returns the updated DTO.
-     */
-    public Optional<DriverResponseDTO> updateDriverStatus(UUID id, DriverStatus newStatus) {
-        return driverRepository.findById(id).map(driver -> {
-            driver.setStatus(newStatus);
-            Driver updatedDriver = driverRepository.save(driver);
-            return convertToDto(updatedDriver); // Convert updated Entity to DTO
-        });
     }
 }

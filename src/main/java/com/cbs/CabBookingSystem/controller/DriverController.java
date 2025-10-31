@@ -31,15 +31,15 @@ public class DriverController {
     }
 
     // 2. POST /api/drivers/login (NEW)
-    @PostMapping("/login")
-    public ResponseEntity<DriverResponseDTO> loginDriver(@RequestBody DriverLoginDTO driverLoginDTO) {
-        // Service attempts login and returns an Optional DTO
-        return driverService.loginDriver(driverLoginDTO)
-                // If successful, return 200 OK with driver details
-                .map(driverDTO -> new ResponseEntity<>(driverDTO, HttpStatus.OK))
-                // If failed (email not found or password mismatch), return 401 Unauthorized
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-    }
+//    @PostMapping("/login")
+//    public ResponseEntity<DriverResponseDTO> loginDriver(@RequestBody DriverLoginDTO driverLoginDTO) {
+//        // Service attempts login and returns an Optional DTO
+//        return driverService.loginDriver(driverLoginDTO)
+//                // If successful, return 200 OK with driver details
+//                .map(driverDTO -> new ResponseEntity<>(driverDTO, HttpStatus.OK))
+//                // If failed (email not found or password mismatch), return 401 Unauthorized
+//                .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+//    }
 
     // 3. GET /api/drivers/available (EXISTING)
     @GetMapping("/available")
