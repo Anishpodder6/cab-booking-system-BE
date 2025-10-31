@@ -1,6 +1,7 @@
 package com.cbs.CabBookingSystem.service;
 
 import com.cbs.CabBookingSystem.dto.*;
+import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.*;
 import com.cbs.CabBookingSystem.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,4 +181,11 @@ public class DriverService {
             return convertToDto(updatedDriver); // Convert updated Entity to DTO
         });
     }
+
+    public DriverResponseDTO findUserById(UUID userId) {
+        Driver userEntity = driverRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID : " + userId));
+        return convertToDto(userEntity);
+    }
+
 }

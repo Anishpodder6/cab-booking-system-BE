@@ -6,6 +6,8 @@ import com.cbs.CabBookingSystem.dto.DriverLoginDTO;
 import com.cbs.CabBookingSystem.dto.DriverRegistrationDTO;
 import com.cbs.CabBookingSystem.dto.DriverResponseDTO;
 // NEW IMPORT
+import com.cbs.CabBookingSystem.dto.RiderRegistrationResponseDTO;
+import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.DriverStatus;
 import com.cbs.CabBookingSystem.service.DriverService;
 import lombok.Getter;
@@ -69,4 +71,24 @@ public class DriverController {
 
         public void setStatus(String status) { this.status = status; }
     }
+
+
+
+
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<?> getDriverAllDetails(@PathVariable UUID userId) {
+            DriverResponseDTO user = null;
+
+            try {
+                user = driverService.findUserById(userId);
+                if (user != null) {
+//                user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
+                    return new ResponseEntity<>(user, HttpStatus.OK);
+                }
+            } catch (ResourceNotFoundException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
 }
