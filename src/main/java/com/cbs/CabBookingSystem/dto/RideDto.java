@@ -15,7 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 //@NoArgsConstructor
 @Getter
-//@Setter
+@Setter
 public class RideDto {
 
     @NotNull

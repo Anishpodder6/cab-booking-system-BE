@@ -16,13 +16,14 @@ public interface RideService {
     Ride patchRideData(Map<String, Object> mp, Long rideId);
     Ride updateRideData(RideDto rideDto, Long rideId);
 
-    Boolean assignDriver(Long rideId, Map<String, Long> mp);
+    Boolean assignDriver(Long rideId, Map<String, String> mp);
 
     List<Ride> getRiderUpcomingRide(UUID userId);
 
     List<Ride> getUnassignedRides();
 
     List<Ride> getDriverUpcomingRide(UUID userId);
+    List<Ride> getDriverUpcomingRide(String userId);
 
     List<Ride> getAllRidesForUser(UUID userId);
     List<Ride> getAllRides();

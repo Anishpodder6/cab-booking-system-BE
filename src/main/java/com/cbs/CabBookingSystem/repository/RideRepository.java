@@ -23,7 +23,7 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
     @Modifying
     @Transactional
     @Query("UPDATE Ride r SET r.driverId = :driverId WHERE r.rideId = :rideId")
-    void updateDriverIdByRideId(Long rideId, Long driverId);
+    void updateDriverIdByRideId(Long rideId, String driverId);
 
 
     @Query("""
@@ -61,7 +61,11 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
         AND r.status IN ('ConfirmedByDriver', 'Ongoing')
         ORDER BY r.dateTime ASC
     """)
+<<<<<<< HEAD
     List<Ride> findDriverUpcomingRides(UUID userId);
+=======
+    List<Ride> findDriverUpcomingRides(String userId);
+>>>>>>> 0a9288c (WIP: Security Pending, Added Fetching of Driver Details, Security filters config for ride)
 
     @Query("""
         SELECT COUNT(r) FROM Ride r

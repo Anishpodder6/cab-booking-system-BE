@@ -15,11 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-<<<<<<< HEAD
 import java.util.UUID;
-=======
-import java.util.Objects; // Specific import
->>>>>>> 96a4132 (Added websocket connection)
 
 @RequiredArgsConstructor
 @Service
@@ -53,6 +49,8 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public Ride getRideById(Long rideId) throws RideNotFound{
+
+
         return rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
     }
 
@@ -91,103 +89,102 @@ public class RideServiceImpl implements RideService {
                     if (value == null || "null".equalsIgnoreCase(String.valueOf(value))) {
                         existingRide.setDriverId(null); // explicitly set to null
                     } else {
-                        // Check if driverId is actually changing to prevent unnecessary exceptions
-                        if (!Objects.equals(existingRide.getDriverId(), Long.valueOf(String.valueOf(value)))) {
-                            boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
+                        // Check if driverId is actually changing to prevent unnecessary exception
+                        boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
 
-                            if (isRideAssignedAlready) {
-                                throw new AlreadyRideAssignedException("Ride is Already Assigned");
-                            }
-                            existingRide.setDriverId(Long.valueOf(String.valueOf(value)));
-                            existingRide.setStatus(RideStatus.ConfirmedByDriver);
+                        if (isRideAssignedAlready) {
+                            throw new AlreadyRideAssignedException("Ride is Already Assigned");
                         }
-<<<<<<< HEAD
-                        existingRide.setDriverId((UUID)value);
+                        existingRide.setDriverId((String) value);
                         existingRide.setStatus(RideStatus.ConfirmedByDriver);
-=======
->>>>>>> 96a4132 (Added websocket connection)
                     }
+                    existingRide.setDriverId((UUID)value);
+                    existingRide.setStatus(RideStatus.ConfirmedByDriver);
                 }
-                case "carType" -> existingRide.setCarType((String) value);
-                case "fare" -> existingRide.setFare(Double.valueOf(String.valueOf(value)));
-                case "status" -> existingRide.setStatus(RideStatus.valueOf((String) value));
-                // case "paymentMethod" -> existingRide.setPaymentMethod(PaymentMethod.valueOf((String) value));
-                default -> throw new IllegalStateException("Unexpected value: " + key);
-            }
-        });
+            case "carType" -> existingRide.setCarType((String) value);
+            case "fare" -> existingRide.setFare(Double.valueOf(String.valueOf(value)));
+            case "status" -> existingRide.setStatus(RideStatus.valueOf((String) value));
+            // case "paymentMethod" -> existingRide.setPaymentMethod(PaymentMethod.valueOf((String) value));
+            default -> throw new IllegalStateException("Unexpected value: " + key);
+        }
+    });
 
-        Ride updatedRide = rideRepository.save(existingRide);
+    Ride updatedRide = rideRepository.save(existingRide);
 
-        // REACTIVE UPDATE: Push the change
-        pushRideUpdate(rideId, updatedRide);
+    // REACTIVE UPDATE: Push the change
+    pushRideUpdate(rideId, updatedRide);
 
         return updatedRide;
+}
+
+@Override
+public Ride updateRideData(RideDto rideDto, Long rideId) throws RideNotFound{
+    Ride existingRide = rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
+
+    existingRide.setUserId(rideDto.getUserId());
+    existingRide.setPickupLocation(rideDto.getPickupLocation());
+    existingRide.setDropLocation(rideDto.getDropLocation());
+    existingRide.setDriverId(rideDto.getDriverId());
+    existingRide.setCarType(rideDto.getCarType());
+    existingRide.setFare(rideDto.getFare());
+    existingRide.setStatus(rideDto.getStatus());
+    // existingRide.setPaymentMethod(rideDto.getPaymentMethod());
+
+    Ride updatedRide = rideRepository.save(existingRide);
+
+    // REACTIVE UPDATE: Push the change
+    pushRideUpdate(rideId, updatedRide);
+
+    return updatedRide;
+}
+
+@Override
+public Boolean assignDriver(Long rideId, Map<String, String>mp) throws RideNotFound, IllegalArgumentException, AlreadyRideAssignedException {
+    if (!rideRepository.existsById(rideId)) {
+        throw new RideNotFound("Ride Not Found");
+    }
+    if (!mp.containsKey("driverId")) {
+        throw new IllegalArgumentException("No driverId present");
     }
 
-    @Override
-    public Ride updateRideData(RideDto rideDto, Long rideId) throws RideNotFound{
-        Ride existingRide = rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
+    var driverId = mp.get("driverId");
 
-        existingRide.setUserId(rideDto.getUserId());
-        existingRide.setPickupLocation(rideDto.getPickupLocation());
-        existingRide.setDropLocation(rideDto.getDropLocation());
-        existingRide.setDriverId(rideDto.getDriverId());
-        existingRide.setCarType(rideDto.getCarType());
-        existingRide.setFare(rideDto.getFare());
-        existingRide.setStatus(rideDto.getStatus());
-        // existingRide.setPaymentMethod(rideDto.getPaymentMethod());
+    boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
 
-        Ride updatedRide = rideRepository.save(existingRide);
-
-        // REACTIVE UPDATE: Push the change
-        pushRideUpdate(rideId, updatedRide);
-
-        return updatedRide;
+    if (isRideAssignedAlready) {
+        throw new AlreadyRideAssignedException("Ride is Already Assigned");
     }
 
-    @Override
-    public Boolean assignDriver(Long rideId, Map<String, Long>mp) throws RideNotFound, IllegalArgumentException, AlreadyRideAssignedException {
-        if (!rideRepository.existsById(rideId)) {
-            throw new RideNotFound("Ride Not Found");
-        }
-        if (!mp.containsKey("driverId")) {
-            throw new IllegalArgumentException("No driverId present");
-        }
+    rideRepository.updateDriverIdByRideId(rideId, driverId);
 
-        var driverId = mp.get("driverId");
+    // After assigning a driver via raw repository method, we need to fetch the updated entity
+    // to push the complete, updated Ride object.
+    Ride updatedRide = getRideById(rideId);
 
-        boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
+    // REACTIVE UPDATE: Push the change
+    pushRideUpdate(rideId, updatedRide);
 
-        if (isRideAssignedAlready) {
-            throw new AlreadyRideAssignedException("Ride is Already Assigned");
-        }
+    return true;
+}
 
-        rideRepository.updateDriverIdByRideId(rideId, driverId);
+// --- Retrieval Methods ---
 
-        // After assigning a driver via raw repository method, we need to fetch the updated entity
-        // to push the complete, updated Ride object.
-        Ride updatedRide = getRideById(rideId);
+@Override
+public List<Ride> getRiderUpcomingRide(UUID userId) {
+    return rideRepository.findRiderUpcomingRides(userId);
+}
 
-        // REACTIVE UPDATE: Push the change
-        pushRideUpdate(rideId, updatedRide);
+@Override
+public List<Ride> getUnassignedRides() {
+    return rideRepository.findUnassignedRides();
+}
 
-        return true;
-    }
-
-    // --- Retrieval Methods ---
-
-    @Override
-    public List<Ride> getRiderUpcomingRide(UUID userId) {
-        return rideRepository.findRiderUpcomingRides(userId);
-    }
-
-    @Override
-    public List<Ride> getUnassignedRides() {
-        return rideRepository.findUnassignedRides();
-    }
-
-    @Override
-    public List<Ride> getDriverUpcomingRide(UUID userId) {
+@Override
+<<<<<<< HEAD
+public List<Ride> getDriverUpcomingRide(UUID userId) {
+=======
+    public List<Ride> getDriverUpcomingRide(String userId) {
+>>>>>>> 0a9288c (WIP: Security Pending, Added Fetching of Driver Details, Security filters config for ride)
         return rideRepository.findDriverUpcomingRides(userId);
     }
 

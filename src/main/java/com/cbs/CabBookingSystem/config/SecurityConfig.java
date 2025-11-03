@@ -46,6 +46,7 @@ import com.cbs.CabBookingSystem.service.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -77,6 +78,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+        .cors(Customizer.withDefaults())
                 // 1. Disable CSRF for stateless REST APIs
                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -84,6 +86,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Public endpoints for registration and login (Auth Controller)
                         .requestMatchers("/v3/api-docs/**","/api/auth/**" , "/swagger-ui/**" , "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+//                        .requestMatchers("/rides/ws/**").permitAll()
 
                         // Protected endpoints: must have a valid JWT and the correct role - role-based access control
                         .requestMatchers("/api/riders/**" , "/api/rides/rider/**").hasRole("RIDER")
