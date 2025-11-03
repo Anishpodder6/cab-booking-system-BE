@@ -1,6 +1,7 @@
 package com.cbs.CabBookingSystem.service.impl;
 
 import com.cbs.CabBookingSystem.dto.RideDto;
+import com.cbs.CabBookingSystem.dto.RideHistoryDTO;
 import com.cbs.CabBookingSystem.exception.customexception.AlreadyRideAssignedException;
 import com.cbs.CabBookingSystem.exception.customexception.RideNotFound;
 import com.cbs.CabBookingSystem.model.Ride;
@@ -158,5 +159,15 @@ public class RideServiceImpl implements RideService {
     @Override
     public RideStatus getRideStatus(Long rideId) {
         return rideRepository.findStatusByRideId(rideId);
+    }
+
+    @Override
+    public List<RideHistoryDTO> getRiderHistory(UUID riderId) {
+        return List.of();
+    }
+
+    @Override
+    public List<RideHistoryDTO> getDriverHistory(UUID driverId) {
+        return List.of();
     }
 }

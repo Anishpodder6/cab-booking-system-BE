@@ -1,7 +1,10 @@
 package com.cbs.CabBookingSystem.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "rating")
@@ -11,14 +14,13 @@ import lombok.*;
 public class Rating {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Primary Key
+    private UUID id; // Primary Key
 
     @Column(nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(nullable = false)
-    private Long driverId;
+    private UUID driverId;
 
     @Column(nullable = false)
     private Integer rating;
@@ -27,5 +29,6 @@ public class Rating {
     private String comments;
 
     // Links the rating back to the specific ride
-    private Long rideId;
+    @NotNull
+    private UUID rideId;
 }
