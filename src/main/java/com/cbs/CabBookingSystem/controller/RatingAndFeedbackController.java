@@ -44,7 +44,7 @@ public class RatingAndFeedbackController {
     }
     // GET /api/ratings/user/{userId}/avgRating - Used for fetching all  average ratings of a specific user
     @GetMapping("/user/{userId}/avgRating")
-    public ResponseEntity<Double> getAverageRating(@PathVariable Long userId) {
+    public ResponseEntity<Double> getAverageRating(@PathVariable UUID userId) {
         // Use the RatingService to get the calculated average
         Double avgRating = ratingService.getUserAverageRating(userId);
         return ResponseEntity.ok(avgRating);

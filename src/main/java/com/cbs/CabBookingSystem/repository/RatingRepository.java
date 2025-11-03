@@ -13,7 +13,7 @@ public interface RatingRepository extends JpaRepository<Rating, UUID> {
 
     // Custom query to calculate the average rating for a specific userId
     @Query("SELECT AVG(r.rating) FROM Rating r WHERE r.userId = :userId")
-    Double calculateAverageRatingByUserId(Long userId);
+    Double calculateAverageRatingByUserId(UUID userId);
 
     // Optional: Count total ratings a user has given (for totalRides/totalRatings logic)
 //    Long countByUserId(Long userId);

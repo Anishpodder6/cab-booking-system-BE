@@ -15,7 +15,7 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long paymentID;
 
-    private Long rideID;
+    private UUID rideID;
     private UUID userID;
     private String pickupLocation;
     private String dropLocation;

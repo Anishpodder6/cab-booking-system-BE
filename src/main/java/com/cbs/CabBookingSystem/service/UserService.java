@@ -130,7 +130,7 @@ public class UserService {
 
         detailsDTO.setTotalSpent(totalSpent != null ? totalSpent : 0.0);
         detailsDTO.setTodaySpent(todaySpent != null ? todaySpent : 0.0);
-        Double avgRating = ratingRepository.calculateAverageRatingByUserId(riderId.getLeastSignificantBits());
+        Double avgRating = ratingRepository.calculateAverageRatingByUserId(riderId);
 
         detailsDTO.setRating(avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0);
     }

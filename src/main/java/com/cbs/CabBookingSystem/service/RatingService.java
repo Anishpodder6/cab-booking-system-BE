@@ -62,7 +62,7 @@ public class RatingService {
         dto.setRideId(model.getRideId());
         return dto;
     }
-    public Double getUserAverageRating(Long userId) {
+    public Double getUserAverageRating(UUID userId) {
         // Use the repository method to calculate the average
         Double avgRating = ratingRepository.calculateAverageRatingByUserId(userId);
 
