@@ -79,7 +79,7 @@ public class PaymentService {
             // --- 1. Title and Header ---
             document.add(new Paragraph("Vector - Official Receipt")
                     .setFontSize(20)
-                    .setBold()
+//                    .setBold()
                     .setTextAlignment(TextAlignment.CENTER));
 
             document.add(new Paragraph("Receipt ID: " + payment.getPaymentID())
@@ -87,20 +87,21 @@ public class PaymentService {
                     .setFontSize(10));
 
             // --- 2. Ride and User Details ---
-            document.add(new Paragraph("\n--- Ride Details ---").setBold().setFontSize(14));
+            document.add(new Paragraph("\n--- Ride Details ---").setFontSize(14));
             document.add(new Paragraph("Ride ID: " + payment.getRideID()));
             document.add(new Paragraph("User ID: " + payment.getUserID()));
             document.add(new Paragraph("Date & Time: " + payment.getTimestamp()
                     .format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss"))));
 
             // --- 3. Location Details ---
-            document.add(new Paragraph("\n--- Trip Route ---").setBold().setFontSize(14));
+            document.add(new Paragraph("\n--- Trip Route ---").setFontSize(14));
             document.add(new Paragraph("Pickup: " + payment.getPickupLocation()));
             document.add(new Paragraph("Drop-off: " + payment.getDropLocation()));
 
             // --- 4. Financial Summary ---
-            document.add(new Paragraph("\n--- Payment Summary ---").setBold().setFontSize(14));
-            document.add(new Paragraph("Amount Paid: INR " + String.format("%.2f", payment.getAmount())).setBold());
+            document.add(new Paragraph("\n--- Payment Summary ---").setFontSize(14));
+            document.add(new Paragraph("Amount Paid: INR " + String.format("%.2f", payment.getAmount()))
+                    );
             document.add(new Paragraph("Payment Method: " + payment.getMethod()));
             document.add(new Paragraph("Status: " + payment.getStatus()));
 

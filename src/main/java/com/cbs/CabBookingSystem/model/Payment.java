@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Data
@@ -15,7 +16,7 @@ public class Payment {
     private Long paymentID;
 
     private Long rideID;
-    private Long userID;
+    private UUID userID;
     private String pickupLocation;
     private String dropLocation;
     private Double amount;

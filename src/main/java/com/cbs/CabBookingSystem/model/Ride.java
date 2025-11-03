@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,7 +22,7 @@ public class Ride {
     Long rideId;
 
     @NotNull
-    Long userId;
+    UUID userId;
 
     @NotBlank
     String pickupLocation;
@@ -29,7 +30,7 @@ public class Ride {
     @NotBlank
     String dropLocation;
 
-    Long driverId;
+    UUID driverId;
     String carType;
 
     @NotNull

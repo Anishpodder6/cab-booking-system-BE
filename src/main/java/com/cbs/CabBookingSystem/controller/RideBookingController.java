@@ -14,9 +14,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/rides")
+@RequestMapping("/api/rides")
 @RequiredArgsConstructor
 @CrossOrigin("http://localhost:4200/")
 public class RideBookingController {
@@ -26,75 +27,64 @@ public class RideBookingController {
     @Autowired
     private CarDataRepository carDataRepository;
 
-    @GetMapping("/test")
-    public String testEndpoint() {
-        return "Ride Booking Controller is working!";
-    }
-
-    @GetMapping({"/all", "/all/"})
-    public ResponseEntity<List<Ride>> getAllRides() {
-        return ResponseEntity.ok(rideService.getAllRides());
-    }
-
-    @GetMapping("/ride/{id}")
+    //rider
+    @GetMapping("/rider/ride/{id}")
     public ResponseEntity<Ride> getRideDetails(@PathVariable Long id) {
         return ResponseEntity.ok(rideService.getRideById(id));
     }
 
-    @PostMapping({"/book", "/book/"})
+    //rider
+    @PostMapping({"/rider/book"})
     public ResponseEntity<Ride> bookRide(@RequestBody @Valid RideDto rideDto) {
         Ride bookedRide = rideService.addRide(rideDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(bookedRide);
     }
 
-    @PutMapping({"/book/{id}", "/book/{id}/"})
-    public ResponseEntity<Ride> updateRideData(@PathVariable Long id, @RequestBody @Valid RideDto rideDto) {
-        Ride newRide = rideService.updateRideData(rideDto, id);
-        return ResponseEntity.ok(newRide);
-    }
-
-    @PatchMapping({"/book/{id}", "/book/{id}/"})
+    //rider
+    @PatchMapping({"/rider/book/{id}"})
     public ResponseEntity<Ride> patchRideData(@PathVariable Long id, @RequestBody Map<String, Object> mp) {
         Ride newRide = rideService.patchRideData(mp, id);
         return ResponseEntity.ok(newRide);
     }
 
-    @PatchMapping({"/driver/assign-driver/{rideId}", "/assign-driver/{rideId}/"})
-    public ResponseEntity<Boolean> assignDriver(@PathVariable Long rideId, @RequestBody Map<String, Long>mp) {
-        return ResponseEntity.ok(rideService.assignDriver(rideId, mp));
-    }
-
-    @GetMapping({"/driver/unassigned-ride", "/unassigned-ride/"})
+    //driver
+    @GetMapping({"/driver/unassigned-ride"})
     public ResponseEntity<List<Ride>> getUnassignedRides() {
         return ResponseEntity.ok(rideService.getUnassignedRides());
     }
 
-    @GetMapping({"/rider/upcoming-ride/{userId}", "/rider-upcoming-ride/{userId}/"})
-    public ResponseEntity<List<Ride>> getRiderUpcomingRides(@PathVariable Long userId) {
+    //rider
+    @GetMapping({"/rider/upcoming-ride/{userId}"})
+    public ResponseEntity<List<Ride>> getRiderUpcomingRides(@PathVariable UUID userId) {
         return ResponseEntity.ok(rideService.getRiderUpcomingRide(userId));
     }
 
-    @GetMapping({"/driver/upcoming-ride/{userId}", "/driver/upcoming-ride/{userId}/"})
-    public ResponseEntity<List<Ride>> getDriverUpcomingRides(@PathVariable Long userId) {
+    //driver
+    @GetMapping({"/driver/upcoming-ride/{userId}"})
+    public ResponseEntity<List<Ride>> getDriverUpcomingRides(@PathVariable UUID userId) {
         return ResponseEntity.ok(rideService.getDriverUpcomingRide(userId));
     }
 
-    @GetMapping({"/userId/{userId}", "/userId/{userId}/"})
-    public ResponseEntity<List<Ride>> getAllRidesForUser(@PathVariable Long userId) {
+    //rider
+    @GetMapping({"/rider/{userId}"})
+    public ResponseEntity<List<Ride>> getAllRidesForUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(rideService.getAllRidesForUser(userId));
     }
 
-    @GetMapping({"/has-two-rides/{userId}", "/has-two-rides/{userId}/"})
-    public ResponseEntity<Boolean> hasTwoRides(@PathVariable Long userId) {
+    //rider
+    @GetMapping({"/rider/has-two-rides/{userId}"})
+    public ResponseEntity<Boolean> hasTwoRides(@PathVariable UUID userId) {
         return ResponseEntity.ok(rideService.hasTwoRides(userId));
     }
 
-    @GetMapping({"/get-car-fares", "/get-car-fares/"})
+    //rider
+    @GetMapping({"/rider/get-car-fares"})
     public ResponseEntity<List<CarData>> getAllCallFares() {
         return ResponseEntity.ok(carDataRepository.findAll());
     }
 
-    @GetMapping({"/status/{id}", "/status/{id}/"})
+    //rider,driver
+    @GetMapping({"/status/{id}"})
     public ResponseEntity<RideStatus> getRideStatus(@PathVariable Long id) {
         return ResponseEntity.ok(rideService.getRideStatus(id));
     }

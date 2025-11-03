@@ -38,8 +38,15 @@ public class User implements UserDetails{
     private String passwordHash;
 
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.RIDER;
+
+    private Double todaySpent;
+    private Integer todayRides;
+    private Double rating;
+    private Double totalSpent;
+    private Integer totalRides;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

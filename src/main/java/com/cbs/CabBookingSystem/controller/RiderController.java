@@ -1,9 +1,6 @@
 package com.cbs.CabBookingSystem.controller;
 
-import com.cbs.CabBookingSystem.dto.RiderRegistrationResponseDTO;
-import com.cbs.CabBookingSystem.dto.UserLoginDto;
-import com.cbs.CabBookingSystem.dto.UserRegistrationDto;
-import com.cbs.CabBookingSystem.dto.UserUpdateDto;
+import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.User;
 import com.cbs.CabBookingSystem.service.UserService;
@@ -96,7 +93,10 @@ public class RiderController {
 
     }
 
-//    @GetMapping("/allDetails/{userId}")
-//    public ResponseEntity<>
+    @GetMapping("/allDetails/{userId}")
+    public ResponseEntity<RiderAllDetailsResponseDTO> getRiderDetailsReport(@PathVariable UUID userId) {
+        RiderAllDetailsResponseDTO detailsResponseDTO = userService.getRiderAllDetails(userId);
+        return ResponseEntity.ok(detailsResponseDTO);
+    }
 
 }

@@ -2,6 +2,7 @@ package com.cbs.CabBookingSystem.controller;
 
 import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.model.User;
+import com.cbs.CabBookingSystem.model.UserPrincipal;
 import com.cbs.CabBookingSystem.service.AuthService;
 import com.cbs.CabBookingSystem.util.JwtUtil;
 import jakarta.validation.Valid;
@@ -10,13 +11,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:4200/")
 public class AuthController {
 
     @Autowired
@@ -45,6 +46,10 @@ public class AuthController {
             // 1. Authenticate and retrieve UserDetails based on email, password, and role
             UserDetails userDetails = authService.loginUser(loginDTO);
 
+//            UUID userId = null;
+//            if(userDetails instanceof UserPrincipal){
+//                userId = ((UserPrincipal) userDetails).getUserId();
+//            }
             // 2. Generate and return JWT token
             String token = jwtUtil.generateToken(userDetails);
 
@@ -55,6 +60,7 @@ public class AuthController {
             // Extract role from the granted authority
             String role = userDetails.getAuthorities().iterator().next().getAuthority().substring(5); // Removes "ROLE_"
             responseDTO.setRole(role);
+//            responseDTO.setUserId(userId);
 
             return ResponseEntity.ok(responseDTO);
 

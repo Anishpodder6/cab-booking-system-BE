@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @AllArgsConstructor
 //@NoArgsConstructor
 @Getter
@@ -17,7 +19,7 @@ import lombok.Setter;
 public class RideDto {
 
     @NotNull
-    Long userId;
+    UUID userId;
 
     @NotBlank
     String pickupLocation;
@@ -25,7 +27,7 @@ public class RideDto {
     @NotBlank
     String dropLocation;
 
-    Long driverId;
+    UUID driverId;
     String carType;
 
     @NotNull

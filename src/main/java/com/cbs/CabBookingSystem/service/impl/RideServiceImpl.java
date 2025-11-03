@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -58,7 +59,7 @@ public class RideServiceImpl implements RideService {
 
         mp.forEach((key, value) -> {
             switch (key) {
-                case "userId" -> existingRide.setUserId(Long.valueOf(String.valueOf(value)));
+                case "userId" -> existingRide.setUserId((UUID) value);
                 case "pickupLocation" -> existingRide.setPickupLocation((String) value);
                 case "dropLocation" -> existingRide.setDropLocation((String) value);
                 case "driverId" -> {
@@ -70,7 +71,7 @@ public class RideServiceImpl implements RideService {
                         if (isRideAssignedAlready) {
                             throw new AlreadyRideAssignedException("Ride is Already Assigned");
                         }
-                        existingRide.setDriverId(Long.valueOf(String.valueOf(value)));
+                        existingRide.setDriverId((UUID)value);
                         existingRide.setStatus(RideStatus.ConfirmedByDriver);
                     }
                 }
@@ -125,7 +126,7 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public List<Ride> getRiderUpcomingRide(Long userId) {
+    public List<Ride> getRiderUpcomingRide(UUID userId) {
         return rideRepository.findRiderUpcomingRides(userId);
     }
 
@@ -135,12 +136,12 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public List<Ride> getDriverUpcomingRide(Long userId) {
+    public List<Ride> getDriverUpcomingRide(UUID userId) {
         return rideRepository.findDriverUpcomingRides(userId);
     }
 
     @Override
-    public List<Ride> getAllRidesForUser(Long userId) {
+    public List<Ride> getAllRidesForUser(UUID userId) {
         return rideRepository.findAllByUserId(userId);
     }
 
@@ -150,7 +151,7 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public Boolean hasTwoRides(Long userId) {
+    public Boolean hasTwoRides(UUID userId) {
         return rideRepository.countActiveRidesByUserId(userId) >= 2;
     }
 

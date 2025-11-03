@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class PaymentDto {
@@ -20,7 +21,7 @@ public class PaymentDto {
     private Long rideID;
 
     @NotNull(message = "User ID is required")
-    private Long userID;
+    private UUID userID;
 
     @NotNull(message = "Amount is required")
     @Min(value = 1, message = "Amount must be greater than zero")

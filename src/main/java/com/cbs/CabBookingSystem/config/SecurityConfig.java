@@ -83,11 +83,11 @@ public class SecurityConfig {
                 // 2. Configure endpoint authorization rules
                 .authorizeHttpRequests(authorize -> authorize
                         // Public endpoints for registration and login (Auth Controller)
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**","/api/auth/**" , "/swagger-ui/**" , "/swagger-ui.html").permitAll()
 
                         // Protected endpoints: must have a valid JWT and the correct role - role-based access control
-                        .requestMatchers("/api/riders/**").hasRole("RIDER")
-                        .requestMatchers("/api/drivers/**").hasRole("DRIVER")
+                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**").hasRole("RIDER")
+                        .requestMatchers("/api/drivers/**" , "/api/rides/driver/**").hasRole("DRIVER")
 
                         // All other endpoints require authentication (valid JWT)
                         .anyRequest().authenticated()
