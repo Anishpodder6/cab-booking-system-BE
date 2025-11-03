@@ -15,15 +15,15 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface RideRepository extends JpaRepository<Ride, Long> {
-    boolean existsByRideIdAndDriverIdIsNotNull(Long rideId);
+public interface RideRepository extends JpaRepository<Ride, UUID> {
+    boolean existsByRideIdAndDriverIdIsNotNull(UUID rideId);
     List<Ride> findAllByUserId(UUID userId);
     Long countByUserId(UUID userId);
 
     @Modifying
     @Transactional
     @Query("UPDATE Ride r SET r.driverId = :driverId WHERE r.rideId = :rideId")
-    void updateDriverIdByRideId(Long rideId, String driverId);
+    void updateDriverIdByRideId(UUID rideId, String driverId);
 
 
     @Query("""
@@ -61,11 +61,7 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
         AND r.status IN ('ConfirmedByDriver', 'Ongoing')
         ORDER BY r.dateTime ASC
     """)
-<<<<<<< HEAD
     List<Ride> findDriverUpcomingRides(UUID userId);
-=======
-    List<Ride> findDriverUpcomingRides(String userId);
->>>>>>> 0a9288c (WIP: Security Pending, Added Fetching of Driver Details, Security filters config for ride)
 
     @Query("""
         SELECT COUNT(r) FROM Ride r
@@ -76,7 +72,7 @@ public interface RideRepository extends JpaRepository<Ride, Long> {
 
 
     @Query("SELECT r.status FROM Ride r WHERE r.rideId = :rideId")
-    RideStatus findStatusByRideId(Long rideId);
+    RideStatus findStatusByRideId(UUID rideId);
 
 
     @Query("""

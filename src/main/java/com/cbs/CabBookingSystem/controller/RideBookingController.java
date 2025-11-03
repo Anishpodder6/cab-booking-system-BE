@@ -29,7 +29,7 @@ public class RideBookingController {
 
     //rider
     @GetMapping("/rider/ride/{id}")
-    public ResponseEntity<Ride> getRideDetails(@PathVariable Long id) {
+    public ResponseEntity<Ride> getRideDetails(@PathVariable UUID id) {
         return ResponseEntity.ok(rideService.getRideById(id));
     }
 
@@ -42,7 +42,7 @@ public class RideBookingController {
 
     //rider
     @PatchMapping({"/rider/book/{id}"})
-    public ResponseEntity<Ride> patchRideData(@PathVariable Long id, @RequestBody Map<String, Object> mp) {
+    public ResponseEntity<Ride> patchRideData(@PathVariable UUID id, @RequestBody Map<String, Object> mp) {
         Ride newRide = rideService.patchRideData(mp, id);
         return ResponseEntity.ok(newRide);
     }
@@ -85,7 +85,7 @@ public class RideBookingController {
 
     //rider,driver
     @GetMapping({"/status/{id}"})
-    public ResponseEntity<RideStatus> getRideStatus(@PathVariable Long id) {
+    public ResponseEntity<RideStatus> getRideStatus(@PathVariable UUID id) {
         return ResponseEntity.ok(rideService.getRideStatus(id));
     }
 }

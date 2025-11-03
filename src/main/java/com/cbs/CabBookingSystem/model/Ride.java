@@ -13,15 +13,14 @@ import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Getter
 @Setter
-@Entity
+@Entity()
+@Table(name = "ride")
 public class Ride {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long rideId;
+    UUID rideId;
 
     @NotNull
     UUID userId;
@@ -45,8 +44,5 @@ public class Ride {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime dateTime;
-
-    @Transient
-    private Rating rating;
 
 }
