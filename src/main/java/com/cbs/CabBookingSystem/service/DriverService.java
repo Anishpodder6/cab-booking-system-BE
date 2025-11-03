@@ -17,7 +17,6 @@ public class DriverService {
 
     @Autowired
     private DriverRepository driverRepository;
-
     // ==========================================================
     //                        HELPER METHODS
     // ==========================================================
@@ -188,4 +187,7 @@ public class DriverService {
         return convertToDto(userEntity);
     }
 
+    public static List<Driver> searchDriverRideHistory(String keyword) {
+        return DriverRepository.searchDriverRideHistory(keyword);
+    }
 }

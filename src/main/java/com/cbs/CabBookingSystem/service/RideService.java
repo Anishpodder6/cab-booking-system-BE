@@ -1,6 +1,7 @@
 package com.cbs.CabBookingSystem.service;
 
 import com.cbs.CabBookingSystem.dto.RideDto;
+import com.cbs.CabBookingSystem.dto.RideHistoryDTO;
 import com.cbs.CabBookingSystem.model.Ride;
 import com.cbs.CabBookingSystem.model.enums.RideStatus;
 
@@ -30,4 +31,8 @@ public interface RideService {
     Boolean hasTwoRides(UUID userId);
 
     RideStatus getRideStatus(UUID rideId);
+
+    List<RideHistoryDTO> getRiderHistory(UUID riderId);
+
+    List<RideHistoryDTO> getDriverHistory(UUID driverId);
 }

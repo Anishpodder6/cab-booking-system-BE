@@ -1,19 +1,19 @@
 package com.cbs.CabBookingSystem.controller;
 
 
-
-import com.cbs.CabBookingSystem.dto.DriverLoginDTO;
-import com.cbs.CabBookingSystem.dto.DriverRegistrationDTO;
-import com.cbs.CabBookingSystem.dto.DriverResponseDTO;
+import com.cbs.CabBookingSystem.dto.*;
 // NEW IMPORT
-import com.cbs.CabBookingSystem.dto.RiderRegistrationResponseDTO;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
+import com.cbs.CabBookingSystem.model.Driver;
 import com.cbs.CabBookingSystem.model.DriverStatus;
 import com.cbs.CabBookingSystem.service.DriverService;
+import com.cbs.CabBookingSystem.service.RideService;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -89,6 +89,35 @@ public class DriverController {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
             return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+    //Driver History
+
+    //Search Rides from history
+    @GetMapping("/driverHistory/search")
+    public ResponseEntity<List<Driver>> searchDriverRideHistory(@RequestParam String keyword){
+        List<Driver> products = driverService.searchDriverRideHistory(keyword);
+        System.out.println("searching with "+ keyword);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+    @Autowired
+    private RideService rideService;
+
+    // Assuming your UserDetails implementation has a method to get the UUID
+    // NOTE: You must replace 'getDriverIdFromDetails' with your actual logic
+    // to extract the UUID from the UserDetails object.
+    private UUID getDriverIdFromDetails(UserDetails driverDetails) {
+        // Placeholder: Needs actual implementation based on your Driver/UserDetails class
+        // Example: return ((YourCustomDriverDetails) driverDetails).getId();
+        return UUID.fromString("b1fdec89-9d1a-4fe7-cc6e-7cc9ce491b22"); // Use a temporary placeholder or real logic
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<RideHistoryDTO>> getDriverRideHistory(
+            @AuthenticationPrincipal UserDetails driverDetails) {
+
+        UUID driverId = getDriverIdFromDetails(driverDetails); // Retrieve authenticated driver's ID
+        List<RideHistoryDTO> history = rideService.getDriverHistory(driverId);
+        return ResponseEntity.ok(history);
     }
 
 }

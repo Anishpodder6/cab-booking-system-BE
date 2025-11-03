@@ -2,6 +2,7 @@ package com.cbs.CabBookingSystem.controller;
 
 import com.cbs.CabBookingSystem.dto.RatingDTO;
 import com.cbs.CabBookingSystem.service.RatingService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.UUID;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/ratings")
 @RequiredArgsConstructor
@@ -17,6 +20,10 @@ public class RatingAndFeedbackController {
 
     private final RatingService ratingService;
 
+//    @GetMapping
+//    public String sayHello() {
+//        return "Hello";
+//    }
     // POST /api/ratings - Used for submitting a new rating and/or feedback (comments)
     @PostMapping
     public ResponseEntity<RatingDTO> createRating(@Valid @RequestBody RatingDTO ratingDTO) {
@@ -27,7 +34,7 @@ public class RatingAndFeedbackController {
 
     // GET /api/ratings/user/{userId} - Used for fetching all ratings given by a specific user
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<RatingDTO>> getRatingsByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<RatingDTO>> getRatingsByUserId(@PathVariable UUID userId) {
         List<RatingDTO> ratings = ratingService.getRatingsByUserId(userId);
 
         if (ratings.isEmpty()) {

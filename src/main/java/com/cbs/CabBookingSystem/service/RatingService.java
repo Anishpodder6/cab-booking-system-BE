@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +21,9 @@ public class RatingService {
         // 1. Convert DTO to Model
         Rating ratingModel = convertToModel(ratingDTO);
 
+        UUID randomUUID = UUID.randomUUID();
+        ratingModel.setId(randomUUID);
+
         // 2. Save Model to Database
         Rating savedModel = ratingRepository.save(ratingModel);
 
@@ -28,7 +32,7 @@ public class RatingService {
     }
 
     // Logic for GET /api/ratings/user/{userId}
-    public List<RatingDTO> getRatingsByUserId(Long userId) {
+    public List<RatingDTO> getRatingsByUserId(UUID userId) {
         List<Rating> ratings = ratingRepository.findByUserId(userId);
 
         // Convert list of Models to list of DTOs
