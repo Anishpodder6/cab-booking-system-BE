@@ -11,8 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    Optional<Payment> findByRideID(Long rideID);
-    boolean existsByRideID(Long rideID);
+    Optional<Payment> findByPaymentID(Long rideID);
+    boolean existsByRideID(UUID rideID);
 
     @Query("""
             SELECT SUM(p.amount) FROM Payment p

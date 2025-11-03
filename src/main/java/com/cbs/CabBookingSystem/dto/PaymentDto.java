@@ -18,7 +18,7 @@ public class PaymentDto {
 
     // Request/Common fields with validation
     @NotNull(message = "Ride ID is required")
-    private Long rideID;
+    private UUID rideID;
 
     @NotNull(message = "User ID is required")
     private UUID userID;

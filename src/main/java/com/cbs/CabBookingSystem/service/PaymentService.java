@@ -60,8 +60,8 @@ public class PaymentService {
     }
 
     // Use PaymentDto for response
-    public Optional<Payment> getReceiptByRideId(Long rideId) {
-        return paymentRepository.findByRideID(rideId);
+    public Optional<Payment> getReceiptByPaymentId(Long paymentId) {
+        return paymentRepository.findByPaymentID(paymentId);
 //                .map(this::mapToDto);
     }
 
