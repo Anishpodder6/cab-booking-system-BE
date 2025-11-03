@@ -1,12 +1,14 @@
 package com.cbs.CabBookingSystem.service.impl;
 
 import com.cbs.CabBookingSystem.dto.RideDto;
-import com.cbs.CabBookingSystem.dto.RideHistoryDTO;
 import com.cbs.CabBookingSystem.exception.customexception.AlreadyRideAssignedException;
 import com.cbs.CabBookingSystem.exception.customexception.RideNotFound;
+import com.cbs.CabBookingSystem.model.Rating;
 import com.cbs.CabBookingSystem.model.Ride;
+import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.model.enums.RideStatus;
 import com.cbs.CabBookingSystem.repository.RideRepository;
+import com.cbs.CabBookingSystem.service.RatingService;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate; // Specific import for pushing messages
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,6 +26,7 @@ import java.util.UUID;
 public class RideServiceImpl implements RideService {
 
     private final RideRepository rideRepository;
+    private final RatingService ratingService;
     private final SimpMessagingTemplate messagingTemplate; // <-- Injected for WebSocket communication
 
     @Autowired
@@ -208,12 +212,33 @@ public class RideServiceImpl implements RideService {
     }
 
     @Override
-    public List<RideHistoryDTO> getRiderHistory(UUID riderId) {
-        return List.of();
+    public List<RideWithRating> getRiderHistory(UUID userId) {
+        List<Ride> rideList =  rideRepository.findAllByUserIdOrderByDateTimeDesc(userId);
+        List<RideWithRating> rideWithRatingList = new ArrayList<>();
+
+        rideList.forEach(ride -> {
+            System.out.println("Got Ride" + ride);
+            Rating rating = ratingService.getRatingByRideId(ride.getRideId());
+            RideWithRating rideWithRating = modelMapper.map(ride, RideWithRating.class);
+            rideWithRating.setRating(rating);
+            rideWithRatingList.add(rideWithRating);
+        });
+
+        return rideWithRatingList;
     }
 
     @Override
-    public List<RideHistoryDTO> getDriverHistory(UUID driverId) {
-        return List.of();
+    public List<RideWithRating> getDriverHistory(UUID driverId) {
+        List<Ride> rideList =  rideRepository.findByDriverIdOrderByDateTimeDesc(driverId);
+        List<RideWithRating> rideWithRatingList = new ArrayList<>();
+
+        rideList.forEach(ride -> {
+            Rating rating = ratingService.getRatingByRideId(ride.getRideId());
+            RideWithRating rideWithRating = modelMapper.map(ride, RideWithRating.class);
+            rideWithRating.setRating(rating);
+            rideWithRatingList.add(rideWithRating);
+        });
+
+        return rideWithRatingList;
     }
 }

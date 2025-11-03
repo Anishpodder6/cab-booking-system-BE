@@ -90,7 +90,7 @@ public class SecurityConfig {
 //                        .requestMatchers("/rides/ws/**").permitAll()
 
                         // Protected endpoints: must have a valid JWT and the correct role - role-based access control
-                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**").hasRole("RIDER")
+                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**" , "/api/ratings").hasRole("RIDER")
                         .requestMatchers("/api/drivers/**" , "/api/rides/driver/**").hasRole("DRIVER")
 
                         // All other endpoints require authentication (valid JWT)

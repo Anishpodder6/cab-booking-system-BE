@@ -41,6 +41,11 @@ public class RatingService {
                 .collect(Collectors.toList());
     }
 
+    public Rating getRatingByRideId(UUID rideId) {
+
+        return ratingRepository.findByRideId(rideId).orElse(null);
+    }
+
     // == Helper methods for DTO <-> Model Conversion ==
 
     private Rating convertToModel(RatingDTO dto) {
@@ -62,7 +67,7 @@ public class RatingService {
         dto.setRideId(model.getRideId());
         return dto;
     }
-    public Double getUserAverageRating(Long userId) {
+    public Double getUserAverageRating(UUID userId) {
         // Use the repository method to calculate the average
         Double avgRating = ratingRepository.calculateAverageRatingByUserId(userId);
 

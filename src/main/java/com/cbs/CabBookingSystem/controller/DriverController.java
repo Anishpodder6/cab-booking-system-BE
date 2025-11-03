@@ -6,6 +6,7 @@ import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.Driver;
 import com.cbs.CabBookingSystem.model.DriverStatus;
+import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.service.DriverService;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.Getter;
@@ -90,6 +91,7 @@ public class DriverController {
             }
             return new ResponseEntity<>(user, HttpStatus.OK);
     }
+
     //Driver History
 
     //Search Rides from history
@@ -102,21 +104,13 @@ public class DriverController {
     @Autowired
     private RideService rideService;
 
-    // Assuming your UserDetails implementation has a method to get the UUID
-    // NOTE: You must replace 'getDriverIdFromDetails' with your actual logic
-    // to extract the UUID from the UserDetails object.
-    private UUID getDriverIdFromDetails(UserDetails driverDetails) {
-        // Placeholder: Needs actual implementation based on your Driver/UserDetails class
-        // Example: return ((YourCustomDriverDetails) driverDetails).getId();
-        return UUID.fromString("b1fdec89-9d1a-4fe7-cc6e-7cc9ce491b22"); // Use a temporary placeholder or real logic
-    }
+    //Driver Ride History
 
-    @GetMapping("/history")
-    public ResponseEntity<List<RideHistoryDTO>> getDriverRideHistory(
-            @AuthenticationPrincipal UserDetails driverDetails) {
+    @GetMapping("/history/{driverId}")
+    public ResponseEntity<List<RideWithRating>> getDriverRideHistory(@PathVariable UUID driverId) {
 
-        UUID driverId = getDriverIdFromDetails(driverDetails); // Retrieve authenticated driver's ID
-        List<RideHistoryDTO> history = rideService.getDriverHistory(driverId);
+//        UUID driverId = getDriverIdFromDetails(driverId); // Retrieve authenticated driver's ID
+        List<RideWithRating> history = rideService.getDriverHistory(driverId);
         return ResponseEntity.ok(history);
     }
 

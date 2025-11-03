@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -80,5 +79,18 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
             WHERE r.userId = :userId AND r.dateTime >= :sinceTime
             """)
     Long countRidesSince(@Param("userId") UUID userId, @Param("sinceTime") LocalDateTime sinceTime);
+
+    //Ride History
+    /**
+     * Finds all Ride entities associated with a specific driver ID,
+     * ordered by the creation dateTime in descending order (newest first).
+     */
+    List<Ride> findByDriverIdOrderByDateTimeDesc(UUID driverId);
+
+    /**
+     * Finds all Ride entities associated with a specific driver ID,
+     * ordered by the creation dateTime in descending order (newest first).
+     */
+    List<Ride> findAllByUserIdOrderByDateTimeDesc(UUID userid);
 
 }
