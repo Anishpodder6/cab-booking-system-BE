@@ -60,8 +60,8 @@ public class AuthController {
             // Extract role from the granted authority
             String role = userDetails.getAuthorities().iterator().next().getAuthority().substring(5); // Removes "ROLE_"
             responseDTO.setRole(role);
-//            responseDTO.setUserId(userId);
-
+            String userId = jwtUtil.extractUserId(token);
+            responseDTO.setUserId(userId);
             return ResponseEntity.ok(responseDTO);
 
         } catch (UsernameNotFoundException | IllegalArgumentException e) {
