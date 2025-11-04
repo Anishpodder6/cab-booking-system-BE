@@ -1,8 +1,8 @@
 package com.cbs.CabBookingSystem.service;
 
 import com.cbs.CabBookingSystem.dto.RideDto;
-import com.cbs.CabBookingSystem.dto.RideHistoryDTO;
 import com.cbs.CabBookingSystem.model.Ride;
+import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.model.enums.RideStatus;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public interface RideService {
 
     RideStatus getRideStatus(UUID rideId);
 
-    List<RideHistoryDTO> getRiderHistory(UUID riderId);
+    List<RideWithRating> getRiderHistory(UUID riderId);
 
-    List<RideHistoryDTO> getDriverHistory(UUID driverId);
+    List<RideWithRating> getDriverHistory(UUID driverId);
 }

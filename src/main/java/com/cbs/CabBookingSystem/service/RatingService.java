@@ -41,6 +41,11 @@ public class RatingService {
                 .collect(Collectors.toList());
     }
 
+    public Rating getRatingByRideId(UUID rideId) {
+
+        return ratingRepository.findByRideId(rideId).orElse(null);
+    }
+
     // == Helper methods for DTO <-> Model Conversion ==
 
     private Rating convertToModel(RatingDTO dto) {

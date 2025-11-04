@@ -2,6 +2,7 @@ package com.cbs.CabBookingSystem.controller;
 
 import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
+import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.model.User;
 import com.cbs.CabBookingSystem.service.RideService;
 import com.cbs.CabBookingSystem.service.UserService;
@@ -108,21 +109,11 @@ public class RiderController {
     @Autowired
     private RideService rideService;
 
-    // Assuming your UserDetails implementation has a method to get the UUID
-    // NOTE: You must replace 'getUserIdFromDetails' with your actual logic
-    // to extract the UUID from the UserDetails object.
-    private UUID getUserIdFromDetails(UserDetails userDetails) {
-        // Placeholder: Needs actual implementation based on your UserDetails class
-        // Example: return ((YourCustomUserDetails) userDetails).getUserId();
-        return UUID.fromString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"); // Use a temporary placeholder or real logic
-    }
+    @GetMapping("/history/{userId}")
+    public ResponseEntity<List<RideWithRating>> getRiderRideHistory(@PathVariable UUID userId) {
 
-    @GetMapping("/history")
-    public ResponseEntity<List<RideHistoryDTO>> getRiderRideHistory(
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID riderId = getUserIdFromDetails(userDetails); // Retrieve authenticated rider's ID
-        List<RideHistoryDTO> history = rideService.getRiderHistory(riderId);
+//        UUID riderId = getUserIdFromDetails(userId); // Retrieve authenticated rider's ID
+        List<RideWithRating> history = rideService.getRiderHistory(userId);
         return ResponseEntity.ok(history);
     }
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -15,8 +16,10 @@ public interface RatingRepository extends JpaRepository<Rating, UUID> {
     @Query("SELECT AVG(r.rating) FROM Rating r WHERE r.userId = :userId")
     Double calculateAverageRatingByUserId(UUID userId);
 
-    // Optional: Count total ratings a user has given (for totalRides/totalRatings logic)
-//    Long countByUserId(Long userId);
+    // Optional: Counted total ratings a user has given for totalRides/totalRatings
+    //    Long countByUserId(Long userId);
 
     List<Rating> findByUserId(UUID userId);
+
+    Optional<Rating> findByRideId(UUID rideId);
 }
