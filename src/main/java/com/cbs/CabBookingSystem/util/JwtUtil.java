@@ -1,5 +1,7 @@
 package com.cbs.CabBookingSystem.util;
 
+import com.cbs.CabBookingSystem.model.Driver;
+import com.cbs.CabBookingSystem.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -25,7 +27,23 @@ public class JwtUtil {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+
+        // 1. Add 'role' claim (existing logic)
         claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+
+        // 2. ADD THE USER ID CLAIM
+
+        // Check if the user is a RIDER (User model)
+        if (userDetails instanceof User user) {
+            // The UUID needs to be converted to a String for the JWT claim
+            claims.put("userId", user.getUserId().toString());
+        }
+        // Check if the user is a DRIVER (Driver model)
+        else if (userDetails instanceof Driver driver) {
+            // The UUID needs to be converted to a String for the JWT claim
+            claims.put("userId", driver.getId().toString());
+        }
+        // Note: The claim key is set to "userId" for consistency, regardless of the role.
 
         return createToken(claims, userDetails.getUsername());
     }
@@ -59,6 +77,10 @@ public class JwtUtil {
 
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
+    }
+
+    public String extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", String.class));
     }
 
     public Boolean validateToken(String token, String userEmail) {
