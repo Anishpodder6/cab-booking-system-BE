@@ -49,7 +49,7 @@ public class PaymentController {
     @GetMapping("/receipt/{rideId}")
     public ResponseEntity<?> getReceipt(@PathVariable Long rideId) {
         // 1. Retrieve the Payment data
-        Optional<Payment> response = paymentService.getReceiptByRideId(rideId);
+        Optional<Payment> response = paymentService.getReceiptByPaymentId(rideId);
 
         if (response.isPresent()) {
             Payment payment = response.get();

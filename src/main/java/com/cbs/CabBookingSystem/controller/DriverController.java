@@ -6,9 +6,11 @@ import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.Driver;
 import com.cbs.CabBookingSystem.model.DriverStatus;
+import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.service.DriverService;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.Getter;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,36 +22,20 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/drivers")
+@CrossOrigin(origins = "http://localhost:4200")
 public class DriverController {
 
     @Autowired
     private DriverService driverService;
 
-    // 1. POST /api/drivers/register (EXISTING)
-    @PostMapping("/register")
-    public ResponseEntity<DriverResponseDTO> registerDriver(@RequestBody DriverRegistrationDTO registrationDTO) {
-        DriverResponseDTO responseDTO = driverService.registerDriver(registrationDTO);
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
-    }
 
-    // 2. POST /api/drivers/login (NEW)
-//    @PostMapping("/login")
-//    public ResponseEntity<DriverResponseDTO> loginDriver(@RequestBody DriverLoginDTO driverLoginDTO) {
-//        // Service attempts login and returns an Optional DTO
-//        return driverService.loginDriver(driverLoginDTO)
-//                // If successful, return 200 OK with driver details
-//                .map(driverDTO -> new ResponseEntity<>(driverDTO, HttpStatus.OK))
-//                // If failed (email not found or password mismatch), return 401 Unauthorized
-//                .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//    }
-
-    // 3. GET /api/drivers/available (EXISTING)
+    // 1. GET /api/drivers/available (EXISTING)
     @GetMapping("/available")
     public List<DriverResponseDTO> getAvailableDrivers() {
         return driverService.getAvailableDrivers();
     }
 
-    // 4. PUT /api/drivers/status/{id} (EXISTING)
+    // 2. PUT /api/drivers/status/{id} (EXISTING)
     @PutMapping("/status/{id}")
     public ResponseEntity<DriverResponseDTO> updateDriverStatus(@PathVariable UUID id, @RequestBody DriverStatusUpdateRequest request) {
         try {
@@ -73,6 +59,16 @@ public class DriverController {
     }
 
 
+    //PUT Method in the Driver profile Section
+    @PutMapping("/{id}")
+    public ResponseEntity<DriverResponseDTO> updateDriver(@PathVariable UUID id, @RequestBody DriverUpdateDTO updateDTO) {
+        // The service layer handles finding, updating, and returning the DTO
+        return driverService.updateDriverProfile(id, updateDTO)
+                .map(updatedDriverDTO -> new ResponseEntity<>(updatedDriverDTO, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+
 
 
     @GetMapping("/profile/{userId}")
@@ -90,6 +86,7 @@ public class DriverController {
             }
             return new ResponseEntity<>(user, HttpStatus.OK);
     }
+
     //Driver History
 
     //Search Rides from history
@@ -102,21 +99,13 @@ public class DriverController {
     @Autowired
     private RideService rideService;
 
-    // Assuming your UserDetails implementation has a method to get the UUID
-    // NOTE: You must replace 'getDriverIdFromDetails' with your actual logic
-    // to extract the UUID from the UserDetails object.
-    private UUID getDriverIdFromDetails(UserDetails driverDetails) {
-        // Placeholder: Needs actual implementation based on your Driver/UserDetails class
-        // Example: return ((YourCustomDriverDetails) driverDetails).getId();
-        return UUID.fromString("b1fdec89-9d1a-4fe7-cc6e-7cc9ce491b22"); // Use a temporary placeholder or real logic
-    }
+    //Driver Ride History
 
-    @GetMapping("/history")
-    public ResponseEntity<List<RideHistoryDTO>> getDriverRideHistory(
-            @AuthenticationPrincipal UserDetails driverDetails) {
+    @GetMapping("/history/{driverId}")
+    public ResponseEntity<List<RideWithRating>> getDriverRideHistory(@PathVariable UUID driverId) {
 
-        UUID driverId = getDriverIdFromDetails(driverDetails); // Retrieve authenticated driver's ID
-        List<RideHistoryDTO> history = rideService.getDriverHistory(driverId);
+//        UUID driverId = getDriverIdFromDetails(driverId); // Retrieve authenticated driver's ID
+        List<RideWithRating> history = rideService.getDriverHistory(driverId);
         return ResponseEntity.ok(history);
     }
 

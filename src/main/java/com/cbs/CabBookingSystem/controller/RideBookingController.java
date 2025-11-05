@@ -27,8 +27,8 @@ public class RideBookingController {
     @Autowired
     private CarDataRepository carDataRepository;
 
-    //rider
-    @GetMapping("/rider/ride/{id}")
+    //driver,rider
+    @GetMapping("/ride/{id}")
     public ResponseEntity<Ride> getRideDetails(@PathVariable UUID id) {
         return ResponseEntity.ok(rideService.getRideById(id));
     }
@@ -40,7 +40,7 @@ public class RideBookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookedRide);
     }
 
-    //rider
+    //rider,driver
     @PatchMapping({"/rider/book/{id}"})
     public ResponseEntity<Ride> patchRideData(@PathVariable UUID id, @RequestBody Map<String, Object> mp) {
         Ride newRide = rideService.patchRideData(mp, id);

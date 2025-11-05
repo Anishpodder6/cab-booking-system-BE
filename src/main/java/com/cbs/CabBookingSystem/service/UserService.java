@@ -84,6 +84,7 @@ public class UserService {
         existingUser.setFirstName(userUpdateDto.getFirstName());
         existingUser.setLastName(userUpdateDto.getLastName());
         existingUser.setPhone(userUpdateDto.getPhone());
+        existingUser.setUpdatedAt(LocalDateTime.now());
 
         User savedUser = userRepository.save(existingUser);
         return mapUserToResponseDTO(savedUser);
@@ -91,8 +92,12 @@ public class UserService {
 
 
     public void deleteUserById(UUID userId) {
+        if (!userRepository.findById(userId).isPresent()) {
+            throw new ResourceNotFoundException("User not found with ID : " + userId);
+        }
         userRepository.deleteById(userId);
     }
+
 
     public RiderAllDetailsResponseDTO getRiderAllDetails(UUID userId) {
         User user = userRepository.findById(userId)
@@ -130,7 +135,7 @@ public class UserService {
 
         detailsDTO.setTotalSpent(totalSpent != null ? totalSpent : 0.0);
         detailsDTO.setTodaySpent(todaySpent != null ? todaySpent : 0.0);
-        Double avgRating = ratingRepository.calculateAverageRatingByUserId(riderId.getLeastSignificantBits());
+        Double avgRating = ratingRepository.calculateAverageRatingByUserId(riderId);
 
         detailsDTO.setRating(avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0);
     }

@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 public class AuthService {
 
@@ -37,6 +39,7 @@ public class AuthService {
         rider.setPhone(userRegistrationDto.getPhone());
         rider.setPasswordHash(passwordEncoder.encode(userRegistrationDto.getPasswordHash()));
         rider.setRole(UserRole.RIDER);
+        rider.setCreatedAt(LocalDateTime.now());
         User user = userRepository.save(rider);
         return new RiderRegistrationResponseDTO(user);
     }
