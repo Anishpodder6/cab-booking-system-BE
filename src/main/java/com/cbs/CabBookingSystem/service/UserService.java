@@ -84,6 +84,7 @@ public class UserService {
         existingUser.setFirstName(userUpdateDto.getFirstName());
         existingUser.setLastName(userUpdateDto.getLastName());
         existingUser.setPhone(userUpdateDto.getPhone());
+        existingUser.setUpdatedAt(LocalDateTime.now());
 
         User savedUser = userRepository.save(existingUser);
         return mapUserToResponseDTO(savedUser);
