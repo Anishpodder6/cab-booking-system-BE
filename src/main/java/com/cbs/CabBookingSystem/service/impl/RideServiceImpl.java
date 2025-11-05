@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -240,5 +241,16 @@ public class RideServiceImpl implements RideService {
         });
 
         return rideWithRatingList;
+    }
+
+    @Override
+    public Map<String, Long> getCarTypeRideCountForRider(UUID userId) {
+        List<Ride> allRides = getAllRidesForUser(userId);
+        return allRides.stream()
+                .filter(ride -> ride.getCarType() != null && !ride.getCarType().trim().isEmpty())
+                .collect(Collectors.groupingBy(
+                        Ride::getCarType,
+                        Collectors.counting()
+                ));
     }
 }

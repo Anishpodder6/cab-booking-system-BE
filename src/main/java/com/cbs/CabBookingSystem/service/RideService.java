@@ -35,4 +35,6 @@ public interface RideService {
     List<RideWithRating> getRiderHistory(UUID riderId);
 
     List<RideWithRating> getDriverHistory(UUID driverId);
+
+    Map<String, Long> getCarTypeRideCountForRider(UUID userId);
 }

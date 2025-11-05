@@ -88,4 +88,16 @@ public class RideBookingController {
     public ResponseEntity<RideStatus> getRideStatus(@PathVariable UUID id) {
         return ResponseEntity.ok(rideService.getRideStatus(id));
     }
+
+
+    @GetMapping("/rider/car-types/history/{userId}")
+    public ResponseEntity<Map<String, Long>> getRiderCarTypeCount(@PathVariable UUID userId) {
+
+        Map<String, Long> carTypeCounts = rideService.getCarTypeRideCountForRider(userId);
+
+        if (carTypeCounts.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(carTypeCounts);
+    }
 }
