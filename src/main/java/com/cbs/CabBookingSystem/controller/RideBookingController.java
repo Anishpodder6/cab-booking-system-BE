@@ -41,7 +41,7 @@ public class RideBookingController {
     }
 
     //rider,driver
-    @PatchMapping({"/rider/book/{id}"})
+    @PatchMapping({"/book/{id}"})
     public ResponseEntity<Ride> patchRideData(@PathVariable UUID id, @RequestBody Map<String, Object> mp) {
         Ride newRide = rideService.patchRideData(mp, id);
         return ResponseEntity.ok(newRide);
