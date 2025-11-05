@@ -10,6 +10,7 @@ import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.service.DriverService;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.Getter;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,36 +22,20 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/drivers")
+@CrossOrigin(origins = "http://localhost:4200")
 public class DriverController {
 
     @Autowired
     private DriverService driverService;
 
-    // 1. POST /api/drivers/register (EXISTING)
-    @PostMapping("/register")
-    public ResponseEntity<DriverResponseDTO> registerDriver(@RequestBody DriverRegistrationDTO registrationDTO) {
-        DriverResponseDTO responseDTO = driverService.registerDriver(registrationDTO);
-        return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
-    }
 
-    // 2. POST /api/drivers/login (NEW)
-//    @PostMapping("/login")
-//    public ResponseEntity<DriverResponseDTO> loginDriver(@RequestBody DriverLoginDTO driverLoginDTO) {
-//        // Service attempts login and returns an Optional DTO
-//        return driverService.loginDriver(driverLoginDTO)
-//                // If successful, return 200 OK with driver details
-//                .map(driverDTO -> new ResponseEntity<>(driverDTO, HttpStatus.OK))
-//                // If failed (email not found or password mismatch), return 401 Unauthorized
-//                .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-//    }
-
-    // 3. GET /api/drivers/available (EXISTING)
+    // 1. GET /api/drivers/available (EXISTING)
     @GetMapping("/available")
     public List<DriverResponseDTO> getAvailableDrivers() {
         return driverService.getAvailableDrivers();
     }
 
-    // 4. PUT /api/drivers/status/{id} (EXISTING)
+    // 2. PUT /api/drivers/status/{id} (EXISTING)
     @PutMapping("/status/{id}")
     public ResponseEntity<DriverResponseDTO> updateDriverStatus(@PathVariable UUID id, @RequestBody DriverStatusUpdateRequest request) {
         try {
@@ -71,6 +56,16 @@ public class DriverController {
         private String status;
 
         public void setStatus(String status) { this.status = status; }
+    }
+
+
+    //PUT Method in the Driver profile Section
+    @PutMapping("/{id}")
+    public ResponseEntity<DriverResponseDTO> updateDriver(@PathVariable UUID id, @RequestBody DriverUpdateDTO updateDTO) {
+        // The service layer handles finding, updating, and returning the DTO
+        return driverService.updateDriverProfile(id, updateDTO)
+                .map(updatedDriverDTO -> new ResponseEntity<>(updatedDriverDTO, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
 

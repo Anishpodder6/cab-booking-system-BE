@@ -1,5 +1,5 @@
 package com.cbs.CabBookingSystem.service;
-
+import org.springframework.transaction.annotation.Transactional; // Added for robustness
 import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
 import com.cbs.CabBookingSystem.model.*;
@@ -136,29 +136,6 @@ public class DriverService {
         return convertToDto(savedDriver);
     }
 
-    // 4. POST /api/drivers/login (MODIFIED)
-//    public Optional<DriverResponseDTO> loginDriver(DriverLoginDTO loginDTO) {
-//        // 1. Find driver(s) by email - now returns a List
-//        List<Driver> drivers = driverRepository.findByPersonalDetailsEmail(loginDTO.getEmail());
-//
-//        // Check if no driver was found
-//        if (drivers.isEmpty()) {
-//            return Optional.empty(); // No driver found
-//        }
-//
-//        // 🚨 Critical Note on Duplicates:
-//        // We will take the first result, but the *real* fix is ensuring email uniqueness
-//        // in your Driver model (using @Column(unique = true)) and database.
-//        Driver driver = drivers.get(0);
-//
-//        // 2. Basic Password Check
-//        if (driver.getPersonalDetails().getPassword().equals(loginDTO.getPassword())) {
-//            // Login successful
-//            return Optional.of(convertToDto(driver));
-//        } else {
-//            return Optional.empty(); // Password mismatch
-//        }
-//    }
     /**
      * 3. GET /api/drivers/available
      * Finds all drivers with the AVAILABLE status and returns them as a list of DTOs.
@@ -179,6 +156,64 @@ public class DriverService {
             Driver updatedDriver = driverRepository.save(driver);
             return convertToDto(updatedDriver); // Convert updated Entity to DTO
         });
+    }
+
+    // FOR PUT in Drivers Profile
+    @Transactional
+    public Optional<DriverResponseDTO> updateDriverProfile(UUID id, DriverUpdateDTO updateDTO) {
+
+        Optional<Driver> driverOpt = driverRepository.findById(id);
+
+        if (driverOpt.isEmpty()) {
+            return Optional.empty(); // Driver not found
+        }
+
+        Driver driver = driverOpt.get();
+
+        // --- 1. Update Personal Details ---
+        PersonalDetails pd = driver.getPersonalDetails();
+
+        if (updateDTO.getFirstName() != null) pd.setFirstName(updateDTO.getFirstName());
+        if (updateDTO.getLastName() != null) pd.setLastName(updateDTO.getLastName());
+        driver.setName(updateDTO.getFirstName() + " " + updateDTO.getLastName());
+        if (updateDTO.getPhone() != null) pd.setPhone(updateDTO.getPhone());
+        if (updateDTO.getDateOfBirth() != null) pd.setDateOfBirth(updateDTO.getDateOfBirth());
+        driver.setPersonalDetails(pd);
+
+        // --- 2. Update Driver Details ---
+        DriverDetails dd = driver.getDriverDetails();
+        if (updateDTO.getLicenseNumber() != null) dd.setLicenseNumber(updateDTO.getLicenseNumber());
+        if (updateDTO.getLicenseExpiry() != null) dd.setLicenseExpiry(updateDTO.getLicenseExpiry());
+        if (updateDTO.getExperience() != null) dd.setExperience(updateDTO.getExperience());
+        if (updateDTO.getEmergencyName() != null) dd.setEmergencyName(updateDTO.getEmergencyName());
+        if (updateDTO.getEmergencyPhone() != null) dd.setEmergencyPhone(updateDTO.getEmergencyPhone());
+        if (updateDTO.getEmergencyRelation() != null) dd.setEmergencyRelation(updateDTO.getEmergencyRelation());
+        driver.setDriverDetails(dd);
+
+        // --- 3. Update Vehicle Details ---
+        VehicleDetails vd = driver.getVehicleDetails();
+        if (updateDTO.getVehicleNumber() != null) vd.setVehicleNumber(updateDTO.getVehicleNumber());
+        if (updateDTO.getVehicleMake() != null) vd.setVehicleMake(updateDTO.getVehicleMake());
+        if (updateDTO.getVehicleModel() != null) vd.setVehicleModel(updateDTO.getVehicleModel());
+        if (updateDTO.getVehicleYear() != null) vd.setVehicleYear(updateDTO.getVehicleYear());
+        if (updateDTO.getVehicleColor() != null) vd.setVehicleColor(updateDTO.getVehicleColor());
+        driver.setVehicleDetails(vd);
+
+        // --- 4. Update Banking Details ---
+        BankingDetails bd = driver.getBankingDetails();
+        if (updateDTO.getBankAccount() != null) bd.setBankAccount(updateDTO.getBankAccount());
+        if (updateDTO.getRoutingNumber() != null) bd.setRoutingNumber(updateDTO.getRoutingNumber());
+        driver.setBankingDetails(bd);
+
+        // --- 5. Update Status (Optional) ---
+        if (updateDTO.getStatus() != null) {
+            driver.setStatus(updateDTO.getStatus());
+        }
+
+        // The @PreUpdate method in the Driver entity handles the 'updatedAt' timestamp and 'name'
+        Driver updatedDriver = driverRepository.save(driver);
+
+        return Optional.of(convertToDto(updatedDriver));
     }
 
     public DriverResponseDTO findUserById(UUID userId) {

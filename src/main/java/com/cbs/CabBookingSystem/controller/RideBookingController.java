@@ -28,7 +28,7 @@ public class RideBookingController {
     private CarDataRepository carDataRepository;
 
     //driver,rider
-    @GetMapping("/rider/ride/{id}")
+    @GetMapping("/ride/{id}")
     public ResponseEntity<Ride> getRideDetails(@PathVariable UUID id) {
         return ResponseEntity.ok(rideService.getRideById(id));
     }
