@@ -92,8 +92,12 @@ public class UserService {
 
 
     public void deleteUserById(UUID userId) {
+        if (!userRepository.findById(userId).isPresent()) {
+            throw new ResourceNotFoundException("User not found with ID : " + userId);
+        }
         userRepository.deleteById(userId);
     }
+
 
     public RiderAllDetailsResponseDTO getRiderAllDetails(UUID userId) {
         User user = userRepository.findById(userId)
