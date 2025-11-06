@@ -25,4 +25,24 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             WHERE p.userID = :userId AND p.status = 'COMPLETED' AND p.timestamp >= :startOfDay
             """)
     Double sumAmountSince(@Param("userId") UUID userId, @Param("startOfDay")LocalDateTime startOfDay);
+
+    @Query("""
+        SELECT SUM(p.amount) FROM Payment p JOIN Ride r ON p.rideID = r.rideId 
+        WHERE r.driverId = :driverId 
+        AND p.status = 'COMPLETED'
+        AND p.timestamp >= :sinceTime
+    """)
+    Double sumEarningsByDriverSince(@Param("driverId") UUID driverId,
+                                    @Param("sinceTime") LocalDateTime sinceTime);
+
+    /**
+     * Calculates the total lifetime earnings for a specific driver.
+     */
+    @Query("""
+        SELECT SUM(p.amount) FROM Payment p JOIN Ride r ON p.rideID = r.rideId 
+        WHERE r.driverId = :driverId 
+        AND p.status = 'COMPLETED'
+    """)
+    Double sumTotalEarningsByDriver(@Param("driverId") UUID driverId);
+
 }

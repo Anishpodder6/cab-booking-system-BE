@@ -4,6 +4,7 @@ import com.cbs.CabBookingSystem.dto.RatingDTO;
 import com.cbs.CabBookingSystem.service.RatingService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/ratings")
 @RequiredArgsConstructor
+@Slf4j
 public class RatingAndFeedbackController {
 
     private final RatingService ratingService;

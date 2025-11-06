@@ -4,6 +4,7 @@ import com.cbs.CabBookingSystem.dto.PaymentDto; // Use the combined DTO
 import com.cbs.CabBookingSystem.model.Payment;
 import com.cbs.CabBookingSystem.service.PaymentService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/payments")
 @CrossOrigin(origins = "http://localhost:4200")
+@Slf4j
 public class PaymentController {
 
 

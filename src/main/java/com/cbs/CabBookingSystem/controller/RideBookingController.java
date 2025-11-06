@@ -7,6 +7,7 @@ import com.cbs.CabBookingSystem.repository.CarDataRepository;
 import com.cbs.CabBookingSystem.service.RideService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @RequestMapping("/api/rides")
 @RequiredArgsConstructor
 @CrossOrigin("http://localhost:4200/")
+@Slf4j
 public class RideBookingController {
 
     private final RideService rideService;

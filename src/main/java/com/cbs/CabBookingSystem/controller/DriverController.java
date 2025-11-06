@@ -10,6 +10,7 @@ import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.service.DriverService;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/drivers")
 @CrossOrigin(origins = "http://localhost:4200")
+@Slf4j
 public class DriverController {
 
     @Autowired
@@ -107,6 +109,19 @@ public class DriverController {
 //        UUID driverId = getDriverIdFromDetails(driverId); // Retrieve authenticated driver's ID
         List<RideWithRating> history = rideService.getDriverHistory(driverId);
         return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/dashboard/{driverId}")
+    public ResponseEntity<DriverAllDetailsResponseDTO> getDriverDashboard(@PathVariable UUID driverId) {
+
+        DriverAllDetailsResponseDTO dashboardData = driverService.getDriverDashboardData(driverId);
+
+        if (dashboardData.driverId() == null) {
+            // This is a weak check; a better check is in the service using findById.
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<>(dashboardData, HttpStatus.OK);
     }
 
 }

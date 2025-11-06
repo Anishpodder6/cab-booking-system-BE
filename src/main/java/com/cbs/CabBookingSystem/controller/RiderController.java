@@ -27,37 +27,20 @@ public class RiderController {
     @Autowired
     private UserService userService;
 
-//    @PostMapping("/register")
-//    public ResponseEntity<User> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto){
-//        User registeredUser = userService.registerUser(userRegistrationDto);
-//        return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
-//    }
-//
-//    @PostMapping("/login")
-//    public ResponseEntity<String> loginUser(@Valid @RequestBody UserLoginDto loginDto) {
-//        try {
-//            User user = userService.findUserByEmail(loginDto.getEmail());
-//            if(user.getPasswordHash().equals(loginDto.getPasswordHash())) {
-//                return ResponseEntity.ok("Login successful for user: " + user.getFirstName());
-//            } else {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-//            }
-//        } catch (ResourceNotFoundException e) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
-//        }
-//    }
-
     @GetMapping("/profile/{userId}")
     public ResponseEntity<?> getUserProfileById(@PathVariable UUID userId) {
         RiderRegistrationResponseDTO user = null;
-
+        log.info("Profile  : " + user + " UserId: " + userId);
         try {
           user = userService.findUserById(userId);
             if (user != null) {
 //                user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
+                log.info("Fetched User Profile: " + new ResponseEntity<>(user, HttpStatus.OK));
                 return new ResponseEntity<>(user, HttpStatus.OK);
+
             }
         } catch (ResourceNotFoundException e) {
+            log.error("error message : " + new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND));
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(user, HttpStatus.OK);
@@ -101,6 +84,7 @@ public class RiderController {
     @GetMapping("/allDetails/{userId}")
     public ResponseEntity<RiderAllDetailsResponseDTO> getRiderDetailsReport(@PathVariable UUID userId) {
         RiderAllDetailsResponseDTO detailsResponseDTO = userService.getRiderAllDetails(userId);
+        log.info("Fetched Rider Details Report: " + detailsResponseDTO);
         return ResponseEntity.ok(detailsResponseDTO);
     }
 
