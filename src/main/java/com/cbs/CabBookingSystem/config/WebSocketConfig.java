@@ -40,28 +40,28 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         .withSockJS(); // Crucial for cross-browser compatibility
     }
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-                List<String> tokenList = accessor.getNativeHeader("token");
-                System.out.println("Got Socket Token: " + tokenList.get(0));
-                if(tokenList.isEmpty()) {
-                    String token = tokenList.get(0);
-                    String username = jwtUtil.extractUsername(token);
-
-                    if (jwtUtil.validateToken(token, username)) {
-                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                        UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                        accessor.setUser(auth);
-                    }
-                }
-
-                return message;
-            }
-        });
-    }
+//    @Override
+//    public void configureClientInboundChannel(ChannelRegistration registration) {
+//        registration.interceptors(new ChannelInterceptor() {
+//            @Override
+//            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+//                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+//                List<String> tokenList = accessor.getNativeHeader("token");
+//                System.out.println("Got Socket Token: " + tokenList.get(0));
+//                if(tokenList.isEmpty()) {
+//                    String token = tokenList.get(0);
+//                    String username = jwtUtil.extractUsername(token);
+//
+//                    if (jwtUtil.validateToken(token, username)) {
+//                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+//                        UsernamePasswordAuthenticationToken auth =
+//                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+//                        accessor.setUser(auth);
+//                    }
+//                }
+//
+//                return message;
+//            }
+//        });
+//    }
 }
