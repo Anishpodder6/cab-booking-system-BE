@@ -38,10 +38,12 @@ public class PaymentController {
         try {
             // The service now accepts and returns PaymentDto
             PaymentDto responseDto = paymentService.processNewPayment(requestDto);
+            log.info("Successfully processed payment for ride ID {}. Payment ID: {}", requestDto.getRideID(), responseDto.getPaymentID());
             return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
         } catch (IllegalStateException e) {
             // 🛑 CRITICAL FIX: Catch the IllegalStateException thrown by the service
             // and return HTTP 409 Conflict with the exception's message in the body.
+            log.error("Duplicate Payment Attempt for ride ID {}: {}", requestDto.getRideID(), e.getMessage(), e);
             System.err.println("Duplicate Payment Attempt: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(e.getMessage());
@@ -50,6 +52,7 @@ public class PaymentController {
 
     @GetMapping("/receipt/{rideId}")
     public ResponseEntity<?> getReceipt(@PathVariable Long rideId) {
+        log.info("Request to generate and retrieve receipt for ride ID: {}", rideId);
         // 1. Retrieve the Payment data
         Optional<Payment> response = paymentService.getReceiptByPaymentId(rideId);
 
@@ -73,17 +76,20 @@ public class PaymentController {
                 headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
                 // 4. Return the PDF byte array with headers and status OK
+                log.info("Successfully generated and serving PDF receipt for ride ID: {}", rideId);
                 return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
             } catch (IOException e) {
                 // Handle PDF generation errors
                 System.err.println("Error generating PDF: " + e.getMessage());
+                log.error("Error generating PDF receipt for ride ID {}: {}", rideId, e.getMessage(), e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body("Error generating PDF receipt.");
             }
         } else {
             // 5. Handle Not Found case
             String errorMessage = "Receipt for ride ID " + rideId + " was not found.";
+            log.warn(errorMessage);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
         }
     }

@@ -29,18 +29,19 @@ public class RiderController {
 
     @GetMapping("/profile/{userId}")
     public ResponseEntity<?> getUserProfileById(@PathVariable UUID userId) {
+        log.info("Attempting to fetch rider profile for ID: {}", userId);
         RiderRegistrationResponseDTO user = null;
         log.info("Profile  : " + user + " UserId: " + userId);
         try {
           user = userService.findUserById(userId);
             if (user != null) {
 //                user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
-                log.info("Fetched User Profile: " + new ResponseEntity<>(user, HttpStatus.OK));
+                log.info("Successfully fetched rider profile for ID: {}", userId);
                 return new ResponseEntity<>(user, HttpStatus.OK);
 
             }
         } catch (ResourceNotFoundException e) {
-            log.error("error message : " + new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND));
+            log.error("Resource not found for rider ID {}: {}", userId, e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(user, HttpStatus.OK);
@@ -53,12 +54,15 @@ public class RiderController {
         try {
             RiderRegistrationResponseDTO updatedUser = userService.updateUserProfileById(userUpdateDto, userId);
             if (updatedUser == null) {
+                log.warn("Update failed: User with ID {} not found by service.", userId);
                 return new ResponseEntity<>("User with ID " + userId + " not found.", HttpStatus.NOT_FOUND);
             }
 //            updatedUser.setPasswordHash(null);
+            log.info("Successfully updated rider profile for ID: {}", userId);
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
 
         } catch (ResourceNotFoundException e) {
+            log.error("Resource not found while updating rider ID {}: {}", userId, e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
@@ -73,9 +77,11 @@ public class RiderController {
             if (getUser != null) {
                 userService.deleteUserById(userId);
             }
+            log.info("Successfully deleted user profile for ID: {}", userId);
             return new ResponseEntity<>("User deleted succesfully", HttpStatus.OK);
 
         } catch (ResourceNotFoundException e){
+            log.error("Resource not found while deleting rider ID {}: {}", userId, e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
 
@@ -84,7 +90,7 @@ public class RiderController {
     @GetMapping("/allDetails/{userId}")
     public ResponseEntity<RiderAllDetailsResponseDTO> getRiderDetailsReport(@PathVariable UUID userId) {
         RiderAllDetailsResponseDTO detailsResponseDTO = userService.getRiderAllDetails(userId);
-        log.info("Fetched Rider Details Report: " + detailsResponseDTO);
+        log.info("Attempting to get all details report for ID: {}", userId);
         return ResponseEntity.ok(detailsResponseDTO);
     }
 
@@ -98,6 +104,7 @@ public class RiderController {
 
 //        UUID riderId = getUserIdFromDetails(userId); // Retrieve authenticated rider's ID
         List<RideWithRating> history = rideService.getRiderHistory(userId);
+        log.info("Fetched {} rides for rider ID: {}", history.size(), userId);
         return ResponseEntity.ok(history);
     }
 

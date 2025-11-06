@@ -33,12 +33,14 @@ public class AuthController {
     public ResponseEntity<RiderRegistrationResponseDTO> registerRider(@Valid @RequestBody UserRegistrationDto registrationDTO) {
         RiderRegistrationResponseDTO newRider = authService.registerRider(registrationDTO);
 //        newRider.set(null); // Remove hash from response
+        log.info("Successfully registered new rider. E-mail: {}", newRider.getEmail());
         return new ResponseEntity<>(newRider, HttpStatus.CREATED);
     }
 
     @PostMapping("/register/driver")
     public ResponseEntity<DriverResponseDTO> registerDriver(@RequestBody DriverRegistrationDTO registrationDTO) {
         DriverResponseDTO responseDTO = authService.registerDriver(registrationDTO);
+        log.info("Successfully registered new driver. ID: {}", responseDTO.getId());
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
@@ -64,10 +66,12 @@ public class AuthController {
             responseDTO.setRole(role);
             String userId = jwtUtil.extractUserId(token);
             responseDTO.setUserId(userId);
+            log.info("User {} successfully logged in with role {}. User ID: {}", loginDTO.email(), role, userId);
             return ResponseEntity.ok(responseDTO);
 
         } catch (UsernameNotFoundException | IllegalArgumentException e) {
             // Catches user not found or invalid credentials (invalid password)
+            log.warn("Login failed: Invalid credentials provided :" + (ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

@@ -34,6 +34,7 @@ public class DriverController {
     // 1. GET /api/drivers/available (EXISTING)
     @GetMapping("/available")
     public List<DriverResponseDTO> getAvailableDrivers() {
+        log.info("Request to fetch all available drivers.");
         return driverService.getAvailableDrivers();
     }
 
@@ -43,11 +44,13 @@ public class DriverController {
         try {
             DriverStatus newStatus = DriverStatus.valueOf(request.getStatus().toUpperCase());
 
+            log.info("Successfully updated driver ID {} status to: {}", id, newStatus);
             return driverService.updateDriverStatus(id, newStatus)
                     .map(updatedDriverDTO -> new ResponseEntity<>(updatedDriverDTO, HttpStatus.OK))
                     .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         } catch (IllegalArgumentException e) {
+            log.error("Invalid status value '{}' provided for driver ID {}.", request.getStatus(), id);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -57,7 +60,9 @@ public class DriverController {
     private static class DriverStatusUpdateRequest {
         private String status;
 
-        public void setStatus(String status) { this.status = status; }
+        public void setStatus(String status) {
+            this.status = status;
+        }
     }
 
 
@@ -65,14 +70,13 @@ public class DriverController {
     @PutMapping("/{id}")
     public ResponseEntity<DriverResponseDTO> updateDriver(@PathVariable UUID id, @RequestBody DriverUpdateDTO updateDTO) {
         // The service layer handles finding, updating, and returning the DTO
+        log.info("Request to update driver profile for ID: {}", id);
         return driverService.updateDriverProfile(id, updateDTO)
                 .map(updatedDriverDTO -> new ResponseEntity<>(updatedDriverDTO, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-
-
-
+    //GET Method in the Driver profile Section
     @GetMapping("/profile/{userId}")
     public ResponseEntity<?> getDriverAllDetails(@PathVariable UUID userId) {
             DriverResponseDTO user = null;
@@ -81,11 +85,14 @@ public class DriverController {
                 user = driverService.findUserById(userId);
                 if (user != null) {
 //                user.setPasswordHash(null);     //SCRUM-222 : Exclusion of sensitive data
+                    log.info("Successfully fetched driver profile for user ID: {}", userId);
                     return new ResponseEntity<>(user, HttpStatus.OK);
                 }
             } catch (ResourceNotFoundException e) {
+                log.error("Resource not found for driver user ID {}: {}", userId, e.getMessage());
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
+            log.warn("Driver user profile for ID {} returned null unexpectedly.", userId);
             return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
@@ -95,6 +102,7 @@ public class DriverController {
     @GetMapping("/driverHistory/search")
     public ResponseEntity<List<Driver>> searchDriverRideHistory(@RequestParam String keyword){
         List<Driver> products = driverService.searchDriverRideHistory(keyword);
+        log.info("Found {} results for keyword: {}", products.size(), keyword);
         System.out.println("searching with "+ keyword);
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
@@ -103,14 +111,17 @@ public class DriverController {
 
     //Driver Ride History
 
+    // Get ride history for a specific driver
     @GetMapping("/history/{driverId}")
     public ResponseEntity<List<RideWithRating>> getDriverRideHistory(@PathVariable UUID driverId) {
 
 //        UUID driverId = getDriverIdFromDetails(driverId); // Retrieve authenticated driver's ID
         List<RideWithRating> history = rideService.getDriverHistory(driverId);
+        log.info("Fetched {} rides in history for driver ID: {}", history.size(), driverId);
         return ResponseEntity.ok(history);
     }
 
+    // Driver Dashboard Data
     @GetMapping("/dashboard/{driverId}")
     public ResponseEntity<DriverAllDetailsResponseDTO> getDriverDashboard(@PathVariable UUID driverId) {
 
@@ -118,9 +129,10 @@ public class DriverController {
 
         if (dashboardData.driverId() == null) {
             // This is a weak check; a better check is in the service using findById.
+            log.warn("Dashboard data could not be fetched (Driver ID {} not found).", driverId);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
+        log.info("Successfully fetched dashboard data for driver ID: {}", driverId);
         return new ResponseEntity<>(dashboardData, HttpStatus.OK);
     }
 
