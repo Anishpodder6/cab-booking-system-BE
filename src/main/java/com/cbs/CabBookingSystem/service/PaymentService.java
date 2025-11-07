@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PaymentService {
@@ -60,8 +61,8 @@ public class PaymentService {
     }
 
     // Use PaymentDto for response
-    public Optional<Payment> getReceiptByPaymentId(Long paymentId) {
-        return paymentRepository.findByPaymentID(paymentId);
+    public Optional<Payment> getReceiptByPaymentId(UUID rideId) {
+        return paymentRepository.findByRideID(rideId);
 //                .map(this::mapToDto);
     }
 

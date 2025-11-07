@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -20,14 +21,11 @@ import java.util.Optional;
 @Slf4j
 public class PaymentController {
 
-
     private PaymentService paymentService;
-
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
-
     /**
      * Handles payment processing.
      * Uses PaymentDto for both request body (with @Valid for validation)
@@ -38,9 +36,10 @@ public class PaymentController {
         try {
             // The service now accepts and returns PaymentDto
             PaymentDto responseDto = paymentService.processNewPayment(requestDto);
+            log.info("Payment processed successfully for Ride ID: " + responseDto.getRideID());
             return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
         } catch (IllegalStateException e) {
-            // 🛑 CRITICAL FIX: Catch the IllegalStateException thrown by the service
+            // CRITICAL FIX: Catch the IllegalStateException thrown by the service
             // and return HTTP 409 Conflict with the exception's message in the body.
             System.err.println("Duplicate Payment Attempt: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -49,7 +48,7 @@ public class PaymentController {
     }
 
     @GetMapping("/receipt/{rideId}")
-    public ResponseEntity<?> getReceipt(@PathVariable Long rideId) {
+    public ResponseEntity<?> getReceipt(@PathVariable UUID rideId) {
         // 1. Retrieve the Payment data
         Optional<Payment> response = paymentService.getReceiptByPaymentId(rideId);
 

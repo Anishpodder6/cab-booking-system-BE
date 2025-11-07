@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    Optional<Payment> findByPaymentID(Long rideID);
+    Optional<Payment> findByRideID(UUID rideID);
     boolean existsByRideID(UUID rideID);
 
     @Query("""
