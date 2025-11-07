@@ -23,9 +23,7 @@ import java.util.UUID;
 public class RideBookingController {
 
     private final RideService rideService;
-
-    @Autowired
-    private CarDataRepository carDataRepository;
+    private final CarDataRepository carDataRepository;
 
     //driver,rider
     @GetMapping("/ride/{id}")
@@ -63,12 +61,6 @@ public class RideBookingController {
     @GetMapping({"/driver/upcoming-ride/{userId}"})
     public ResponseEntity<List<Ride>> getDriverUpcomingRides(@PathVariable UUID userId) {
         return ResponseEntity.ok(rideService.getDriverUpcomingRide(userId));
-    }
-
-    //rider
-    @GetMapping({"/rider/{userId}"})
-    public ResponseEntity<List<Ride>> getAllRidesForUser(@PathVariable UUID userId) {
-        return ResponseEntity.ok(rideService.getAllRidesForUser(userId));
     }
 
     //rider

@@ -2,7 +2,9 @@
 package com.cbs.CabBookingSystem.exception.handler;
 
 import com.cbs.CabBookingSystem.exception.customexception.AlreadyRideAssignedException;
+import com.cbs.CabBookingSystem.exception.customexception.DriverNotFound;
 import com.cbs.CabBookingSystem.exception.customexception.RideNotFound;
+import com.cbs.CabBookingSystem.exception.customexception.UserNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException; // <-- NEW IMPORT
@@ -16,7 +18,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     // 1. Handler for Validation Errors (Maps to 400 Bad Request)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler({MethodArgumentNotValidException.class})
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         // Simple error extraction for testing purposes
@@ -27,14 +29,27 @@ public class GlobalExceptionHandler {
     }
 
     // 2. Handler for Known Business Exceptions (Maps to 404 Not Found or other suitable status)
-    @ExceptionHandler({RideNotFound.class, AlreadyRideAssignedException.class})
+    @ExceptionHandler({RideNotFound.class, UserNotFound.class, DriverNotFound.class})
     public ResponseEntity<Map<String, String>> handleNotFoundExceptions(Exception ex) {
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentEx(IllegalArgumentException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 
-    // 3. (Optional) Generic handler for all other exceptions (Maps to 500 Internal Server Error)
+    @ExceptionHandler({AlreadyRideAssignedException.class})
+    public ResponseEntity<Map<String, String>> handleAlreadyRideAssigned(AlreadyRideAssignedException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // (Optional) Generic handler for all other exceptions (Maps to 500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleAllOtherExceptions(Exception ex) {
         Map<String, String> error = new HashMap<>();

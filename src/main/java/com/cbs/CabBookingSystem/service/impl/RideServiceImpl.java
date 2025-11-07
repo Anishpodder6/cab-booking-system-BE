@@ -2,12 +2,16 @@ package com.cbs.CabBookingSystem.service.impl;
 
 import com.cbs.CabBookingSystem.dto.RideDto;
 import com.cbs.CabBookingSystem.exception.customexception.AlreadyRideAssignedException;
+import com.cbs.CabBookingSystem.exception.customexception.DriverNotFound;
 import com.cbs.CabBookingSystem.exception.customexception.RideNotFound;
+import com.cbs.CabBookingSystem.exception.customexception.UserNotFound;
 import com.cbs.CabBookingSystem.model.Rating;
 import com.cbs.CabBookingSystem.model.Ride;
 import com.cbs.CabBookingSystem.model.RideWithRating;
 import com.cbs.CabBookingSystem.model.enums.RideStatus;
+import com.cbs.CabBookingSystem.repository.DriverRepository;
 import com.cbs.CabBookingSystem.repository.RideRepository;
+import com.cbs.CabBookingSystem.repository.UserRepository;
 import com.cbs.CabBookingSystem.service.RatingService;
 import com.cbs.CabBookingSystem.service.RideService;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +31,11 @@ import java.util.stream.Collectors;
 public class RideServiceImpl implements RideService {
 
     private final RideRepository rideRepository;
+    private final UserRepository userRepository;
+    private final DriverRepository driverRepository;
     private final RatingService ratingService;
     private final SimpMessagingTemplate messagingTemplate; // <-- Injected for WebSocket communication
-
-    @Autowired
-    private ModelMapper modelMapper;
+    private final ModelMapper modelMapper;
 
     /**
      * Helper method to push the updated Ride object to the client.
@@ -49,6 +53,9 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public Ride addRide(RideDto rideDto) {
+
+        if (!isUserExists(rideDto.getUserId())) throw new UserNotFound();
+
         Ride newRide = modelMapper.map(rideDto, Ride.class);
 
         UUID id = UUID.randomUUID();
@@ -63,27 +70,6 @@ public class RideServiceImpl implements RideService {
         return rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
     }
 
-    @Override
-    public Ride updateRideStatus(UUID rideId, String status) throws RideNotFound {
-        Ride existingRide = rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
-        existingRide.setStatus(RideStatus.valueOf(status));
-        Ride updatedRide = rideRepository.save(existingRide);
-
-        // REACTIVE UPDATE: Push the change
-        pushRideUpdate(rideId, updatedRide);
-
-        return updatedRide;
-    }
-
-    @Override
-    public Boolean deleteRide(UUID rideId) {
-        boolean isDeleted = false;
-        if (rideRepository.existsById(rideId)) {
-            rideRepository.deleteById(rideId);
-            isDeleted = true;
-        }
-        return isDeleted;
-    }
 
     @Override
     public Ride patchRideData(Map<String, Object> mp, UUID rideId) throws RideNotFound {
@@ -91,27 +77,40 @@ public class RideServiceImpl implements RideService {
 
         mp.forEach((key, value) -> {
             switch (key) {
-                case "userId" -> existingRide.setUserId(UUID.fromString((String) value));
-                case "pickupLocation" -> existingRide.setPickupLocation((String) value);
-                case "dropLocation" -> existingRide.setDropLocation((String) value);
                 case "driverId" -> {
                     if (value == null || "null".equalsIgnoreCase(String.valueOf(value))) {
                         existingRide.setDriverId(null); // explicitly set to null
                     } else {
+                        UUID driverID;
+
+                        // Check if driverId is uuid and assign to variable
+                        try {
+                            driverID = UUID.fromString((String) value);
+                        } catch (IllegalArgumentException e) {
+                            throw new IllegalArgumentException("Invalid Driver ID format: " + value);
+                        }
+
+                        if(!isDriverExists(driverID)) throw new DriverNotFound(driverID);
                         // Check if driverId is actually changing to prevent unnecessary exception
                         boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
 
                         if (isRideAssignedAlready) {
                             throw new AlreadyRideAssignedException("Ride is Already Assigned");
                         }
-                        existingRide.setDriverId(UUID.fromString((String) value));
+                        existingRide.setDriverId(driverID);
                         existingRide.setStatus(RideStatus.ConfirmedByDriver);
                     }
                 }
-                case "carType" -> existingRide.setCarType(String.valueOf(value));
-                case "fare" -> existingRide.setFare(Double.valueOf(String.valueOf(value)));
-                case "status" -> existingRide.setStatus(RideStatus.valueOf((String) value));
-                // case "paymentMethod" -> existingRide.setPaymentMethod(PaymentMethod.valueOf((String) value));
+                case "status" -> {
+                    RideStatus newStatus;
+                    try {
+                        newStatus = RideStatus.valueOf((String) value);
+                    } catch (IllegalArgumentException e) {
+                        throw new IllegalArgumentException("Invalid Ride Status: " + value);
+                    }
+                    existingRide.setStatus(newStatus);
+                }
+
                 default -> throw new IllegalStateException("Unexpected value: " + key);
             }
         });
@@ -124,55 +123,10 @@ public class RideServiceImpl implements RideService {
         return updatedRide;
     }
 
-    @Override
-    public Ride updateRideData(RideDto rideDto, UUID rideId) throws RideNotFound {
-        Ride existingRide = rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
-
-        existingRide.setUserId(rideDto.getUserId());
-        existingRide.setPickupLocation(rideDto.getPickupLocation());
-        existingRide.setDropLocation(rideDto.getDropLocation());
-        existingRide.setDriverId(rideDto.getDriverId());
-        existingRide.setCarType(rideDto.getCarType());
-        existingRide.setFare(rideDto.getFare());
-        existingRide.setStatus(rideDto.getStatus());
-        // existingRide.setPaymentMethod(rideDto.getPaymentMethod());
-
-        Ride updatedRide = rideRepository.save(existingRide);
-
-        // REACTIVE UPDATE: Push the change
-        pushRideUpdate(rideId, updatedRide);
-
-        return updatedRide;
+    private boolean isDriverExists(UUID driverId) {
+        return driverRepository.existsById(driverId);
     }
 
-    @Override
-    public Boolean assignDriver(UUID rideId, Map<String, String> mp) throws RideNotFound, IllegalArgumentException, AlreadyRideAssignedException {
-        if (!rideRepository.existsById(rideId)) {
-            throw new RideNotFound("Ride Not Found");
-        }
-        if (!mp.containsKey("driverId")) {
-            throw new IllegalArgumentException("No driverId present");
-        }
-
-        var driverId = mp.get("driverId");
-
-        boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
-
-        if (isRideAssignedAlready) {
-            throw new AlreadyRideAssignedException("Ride is Already Assigned");
-        }
-
-        rideRepository.updateDriverIdByRideId(rideId, driverId);
-
-        // After assigning a driver via raw repository method, we need to fetch the updated entity
-        // to push the complete, updated Ride object.
-        Ride updatedRide = getRideById(rideId);
-
-        // REACTIVE UPDATE: Push the change
-        pushRideUpdate(rideId, updatedRide);
-
-        return true;
-    }
 
 // --- Retrieval Methods ---
 
@@ -197,10 +151,6 @@ public class RideServiceImpl implements RideService {
         return rideRepository.findAllByUserId(userId);
     }
 
-    @Override
-    public List<Ride> getAllRides() {
-        return rideRepository.findAll();
-    }
 
     @Override
     public Boolean hasTwoRides(UUID userId) {
@@ -247,10 +197,15 @@ public class RideServiceImpl implements RideService {
     public Map<String, Long> getCarTypeRideCountForRider(UUID userId) {
         List<Ride> allRides = getAllRidesForUser(userId);
         return allRides.stream()
-                .filter(ride -> ride.getCarType() != null && !ride.getCarType().trim().isEmpty())
-                .collect(Collectors.groupingBy(
-                        Ride::getCarType,
-                        Collectors.counting()
-                ));
+        .filter(ride -> ride.getCarType() != null && !ride.getCarType().trim().isEmpty())
+        .collect(Collectors.groupingBy(
+        Ride::getCarType,
+        Collectors.counting()
+        ));
     }
+
+    private boolean isUserExists(UUID userId) {
+        return userRepository.existsById(userId);
+    }
+
 }

@@ -12,13 +12,7 @@ import java.util.UUID;
 public interface RideService {
     Ride addRide(RideDto rideDto);
     Ride getRideById(UUID rideId);
-    Ride updateRideStatus(UUID rideId, String status);
-    Boolean deleteRide(UUID rideId);
     Ride patchRideData(Map<String, Object> mp, UUID rideId);
-    Ride updateRideData(RideDto rideDto, UUID rideId);
-
-    Boolean assignDriver(UUID rideId, Map<String, String> mp);
-
     List<Ride> getRiderUpcomingRide(UUID userId);
 
     List<Ride> getUnassignedRides();
@@ -26,7 +20,6 @@ public interface RideService {
     List<Ride> getDriverUpcomingRide(UUID userId);
 
     List<Ride> getAllRidesForUser(UUID userId);
-    List<Ride> getAllRides();
 
     Boolean hasTwoRides(UUID userId);
 
