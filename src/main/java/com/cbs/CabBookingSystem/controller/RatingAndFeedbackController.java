@@ -22,26 +22,26 @@ public class RatingAndFeedbackController {
 
     private final RatingService ratingService;
 
-//    @GetMapping
-//    public String sayHello() {
-//        return "Hello";
-//    }
-    // POST /api/ratings - Used for submitting a new rating and/or feedback (comments)
+    // POST - Used for submitting a new rating and/or feedback (comments)
     @PostMapping
     public ResponseEntity<RatingDTO> createRating(@Valid @RequestBody RatingDTO ratingDTO) {
         // The @Valid annotation triggers validation rules defined in RatingDTO
         RatingDTO createdRating = ratingService.createRating(ratingDTO);
+        log.info("Request to create a new rating for ride ID: {}", ratingDTO.getRideId());
         return new ResponseEntity<>(createdRating, HttpStatus.CREATED);
     }
 
-    // GET /api/ratings/user/{userId} - Used for fetching all ratings given by a specific user
+    // GET - Used for fetching all ratings given by a specific user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<RatingDTO>> getRatingsByUserId(@PathVariable UUID userId) {
+        log.info("Request to fetch all ratings given by user ID: {}", userId);
         List<RatingDTO> ratings = ratingService.getRatingsByUserId(userId);
 
         if (ratings.isEmpty()) {
+            log.info("No ratings found for user ID: {}", userId);
             return ResponseEntity.noContent().build(); // HTTP 204 No Content
         }
+        log.info("Fetched {} ratings for user ID: {}", ratings.size(), userId);
         return ResponseEntity.ok(ratings); // HTTP 200 OK
     }
     // GET /api/ratings/user/{userId}/avgRating - Used for fetching all  average ratings of a specific user
@@ -49,6 +49,7 @@ public class RatingAndFeedbackController {
     public ResponseEntity<Double> getAverageRating(@PathVariable UUID userId) {
         // Use the RatingService to get the calculated average
         Double avgRating = ratingService.getUserAverageRating(userId);
+        log.info("Average rating for user ID {} is: {}", userId, avgRating);
         return ResponseEntity.ok(avgRating);
     }
 }

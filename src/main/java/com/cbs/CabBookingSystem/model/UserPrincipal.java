@@ -11,8 +11,11 @@ import java.util.UUID;
 
 public class UserPrincipal implements UserDetails {
 
-    private User user;
+    //basically we are having a table and class which represents that table in db having entities as columns/properties
 
+    //instance variable -> what ever the user details we want to expose through spring security we can do it here
+    private User user;
+    //created obj here to get the instance access of user
     public UserPrincipal(User user){
         this.user = user;
     }

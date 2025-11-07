@@ -62,11 +62,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity // Allows @PreAuthorize annotation on methods
 public class SecurityConfig {
-
+    // 1. Dependencies for UserDetailsService and JWT Filter
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
 
-    // Constructor Injection
+    // Constructor Injection for dependencies
     public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtAuthFilter jwtAuthFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthFilter = jwtAuthFilter;
