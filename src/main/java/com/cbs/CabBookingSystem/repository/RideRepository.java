@@ -93,4 +93,34 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
      */
     List<Ride> findAllByUserIdOrderByDateTimeDesc(UUID userid);
 
+    // 1. Total Earnings Today (using the final fare from the Payment table is better,
+    // but using Ride.fare for simplicity, assuming ride.fare is paid)
+    @Query("""
+        SELECT SUM(r.fare) FROM Ride r
+        WHERE r.driverId = :driverId 
+        AND r.status = 'COMPLETED' 
+        AND r.dateTime >= :startOfDay
+    """)
+    Double sumEarningsByDriverSince(@Param("driverId") UUID driverId,
+                                    @Param("startOfDay") LocalDateTime startOfDay);
+
+    // 2. Total Rides Today
+    @Query("""
+        SELECT COUNT(r) FROM Ride r
+        WHERE r.driverId = :driverId 
+        AND r.status = 'COMPLETED'
+        AND r.dateTime >= :startOfDay
+    """)
+    Long countCompletedRidesByDriverSince(@Param("driverId") UUID driverId,
+                                          @Param("startOfDay") LocalDateTime startOfDay);
+
+    // 3. Total Accepted Rides (for Acceptance Rate calculation)
+    Long countByDriverId(UUID driverId);
+
+    // 4. Total Rides Assigned (Including declined, pending, completed, etc., for the denominator)
+    // This is a placeholder; getting the true denominator requires logging all assignment attempts.
+    // For simplicity, we assume all non-unassigned/non-cancelled rides were assigned.
+    @Query("SELECT COUNT(r) FROM Ride r WHERE r.driverId = :driverId")
+    Long countAssignedRidesByDriver(UUID driverId);
+
 }

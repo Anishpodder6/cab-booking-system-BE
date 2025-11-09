@@ -11,6 +11,7 @@ import com.cbs.CabBookingSystem.repository.PaymentRepository;
 import com.cbs.CabBookingSystem.repository.RatingRepository;
 import com.cbs.CabBookingSystem.repository.RideRepository;
 import com.cbs.CabBookingSystem.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class UserService {
 
     @Autowired
@@ -39,8 +41,6 @@ public class UserService {
     @Autowired 
     private RatingRepository ratingRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     private RiderRegistrationResponseDTO mapUserToResponseDTO(User user) {
         RiderRegistrationResponseDTO dto = new RiderRegistrationResponseDTO();
@@ -54,17 +54,6 @@ public class UserService {
 
         return dto;
     }
-
-//    public User registerUser(UserRegistrationDto registrationDto) {
-//        User user = new User();
-//        user.setFirstName(registrationDto.getFirstName());
-//        user.setLastName(registrationDto.getLastName());
-//        user.setEmail(registrationDto.getEmail());
-//        user.setPhone(registrationDto.getPhone());
-//        user.setPasswordHash(passwordEncoder.encode(registrationDto.getPasswordHash()));
-//        user.setCreatedAt(LocalDateTime.now());
-//        return userRepository.save(user);
-//    }
 
     public User findUserByEmail(String email){
         return userRepository.findByEmail(email)
@@ -85,16 +74,18 @@ public class UserService {
         existingUser.setLastName(userUpdateDto.getLastName());
         existingUser.setPhone(userUpdateDto.getPhone());
         existingUser.setUpdatedAt(LocalDateTime.now());
-
         User savedUser = userRepository.save(existingUser);
+        log.info("Updated User Profile: " + savedUser);
         return mapUserToResponseDTO(savedUser);
     }
 
 
     public void deleteUserById(UUID userId) {
         if (!userRepository.findById(userId).isPresent()) {
+            log.error("User not found with ID : " + userId);
             throw new ResourceNotFoundException("User not found with ID : " + userId);
         }
+        log.info("Deleted User Profile: " + userRepository.findById(userId).get());
         userRepository.deleteById(userId);
     }
 

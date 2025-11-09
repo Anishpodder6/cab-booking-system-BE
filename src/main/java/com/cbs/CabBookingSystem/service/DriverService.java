@@ -1,4 +1,7 @@
 package com.cbs.CabBookingSystem.service;
+import com.cbs.CabBookingSystem.repository.PaymentRepository;
+import com.cbs.CabBookingSystem.repository.RatingRepository;
+import com.cbs.CabBookingSystem.repository.RideRepository;
 import org.springframework.transaction.annotation.Transactional; // Added for robustness
 import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
@@ -6,6 +9,8 @@ import com.cbs.CabBookingSystem.model.*;
 import com.cbs.CabBookingSystem.repository.DriverRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +22,16 @@ public class DriverService {
 
     @Autowired
     private DriverRepository driverRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private RatingRepository ratingRepository;
+
+    @Autowired
+    private RideRepository rideRepository;
+
     // ==========================================================
     //                        HELPER METHODS
     // ==========================================================
@@ -224,5 +239,57 @@ public class DriverService {
 
     public static List<Driver> searchDriverRideHistory(String keyword) {
         return DriverRepository.searchDriverRideHistory(keyword);
+    }
+
+    public DriverAllDetailsResponseDTO getDriverDashboardData(UUID driverId) {
+
+        // --- Setup Time Boundaries ---
+        // Get the start of the current day (00:00:00) for daily metrics
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+
+        // 1. EARNINGS & RIDES
+        Double todayEarnings = paymentRepository.sumEarningsByDriverSince(driverId, startOfToday);
+        Double totalLifetimeEarnings = paymentRepository.sumTotalEarningsByDriver(driverId); // For potential use in weekly goals
+
+        Long todayRidesCompleted = rideRepository.countCompletedRidesByDriverSince(driverId, startOfToday);
+
+        // 2. RATING
+        Double averageRating = ratingRepository.findAverageRatingByDriverId(driverId)
+                .orElse(0.0);
+        double roundedRating = Math.round(averageRating * 10.0) / 10.0;
+
+
+        // 3. ACCEPTANCE RATE (Only possible if you log assigned/declined attempts. We calculate Accepted/Assigned total)
+        Long totalAcceptedRides = rideRepository.countByDriverId(driverId); // Counts total rides linked to driverId
+        Long totalAssignedRides = rideRepository.countAssignedRidesByDriver(driverId); // Counts attempts
+
+        // Check for division by zero
+        double acceptanceRate = (totalAssignedRides != null && totalAssignedRides > 0) ?
+                (double) totalAcceptedRides / totalAssignedRides : 0.0;
+
+        String acceptanceRateValue = String.format("%.0f%%", acceptanceRate * 100);
+
+        // --- Build and Return DTO ---
+        return DriverAllDetailsResponseDTO.builder()
+                .driverId(driverId)
+
+                // Card Metrics
+                .todaysEarnings(todayEarnings != null ? todayEarnings : 0.0)
+                .todaysRides(todayRidesCompleted != null ? todayRidesCompleted.intValue() : 0)
+                .driverRating(roundedRating)
+                .additionalMetricLabel("Acceptance Rate")
+                .additionalMetricValue(acceptanceRateValue)
+
+                // Weekly Goals (Goal values are hardcoded as they are administrative targets,
+                // but achieved values are now real)
+                .weeklyEarningsGoal(500.0) // Goal is an administrative target
+                .weeklyEarningsAchieved(totalLifetimeEarnings) // Using Lifetime Earnings as a placeholder for a weekly metric
+                .weeklyRidesGoal(50)
+                .weeklyRidesAchieved(totalAcceptedRides != null ? totalAcceptedRides.intValue() : 0) // Total rides achieved
+                .ratingMaintenanceGoal(4.5)
+                .ratingMaintenanceAchieved(roundedRating)
+                .acceptanceRateGoal(0.85)
+                .acceptanceRateAchieved(acceptanceRate)
+                .build();
     }
 }

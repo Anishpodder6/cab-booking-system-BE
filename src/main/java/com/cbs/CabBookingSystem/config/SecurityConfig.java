@@ -62,11 +62,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity // Allows @PreAuthorize annotation on methods
 public class SecurityConfig {
-
+    // 1. Dependencies for UserDetailsService and JWT Filter
     private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
 
-    // Constructor Injection
+    // Constructor Injection for dependencies
     public SecurityConfig(UserDetailsServiceImpl userDetailsService, JwtAuthFilter jwtAuthFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthFilter = jwtAuthFilter;
@@ -85,12 +85,12 @@ public class SecurityConfig {
                 // 2. Configure endpoint authorization rules
                 .authorizeHttpRequests(authorize -> authorize
                         // Public endpoints for registration and login (Auth Controller)
-                        .requestMatchers("/v3/api-docs/**","/api/auth/**" , "/swagger-ui/**" , "/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**","/api/auth/**" , "/swagger-ui/**" , "/swagger-ui.html" , "/api/drivers/profile/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/rides/ws/**").permitAll()
+//                        .requestMatchers("/rides/ws/**").permitAll()
 
                         // Protected endpoints: must have a valid JWT and the correct role - role-based access control
-                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**" , "/api/ratings" , "/api/drivers/profile/**").hasRole("RIDER")
+                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**" , "/api/ratings" , "/api/payments/receipt/**").hasRole("RIDER")
                         .requestMatchers("/api/drivers/**" , "/api/rides/driver/**").hasRole("DRIVER")
 
                         // All other endpoints require authentication (valid JWT)

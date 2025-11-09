@@ -6,6 +6,7 @@ import com.cbs.CabBookingSystem.model.UserPrincipal;
 import com.cbs.CabBookingSystem.service.AuthService;
 import com.cbs.CabBookingSystem.util.JwtUtil;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "http://localhost:4200/")
+@Slf4j
 public class AuthController {
 
     @Autowired
@@ -31,12 +33,14 @@ public class AuthController {
     public ResponseEntity<RiderRegistrationResponseDTO> registerRider(@Valid @RequestBody UserRegistrationDto registrationDTO) {
         RiderRegistrationResponseDTO newRider = authService.registerRider(registrationDTO);
 //        newRider.set(null); // Remove hash from response
+        log.info("Successfully registered new rider. E-mail: {}", newRider.getEmail());
         return new ResponseEntity<>(newRider, HttpStatus.CREATED);
     }
 
     @PostMapping("/register/driver")
     public ResponseEntity<DriverResponseDTO> registerDriver(@RequestBody DriverRegistrationDTO registrationDTO) {
         DriverResponseDTO responseDTO = authService.registerDriver(registrationDTO);
+        log.info("Successfully registered new driver. ID: {}", responseDTO.getId());
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
@@ -62,10 +66,12 @@ public class AuthController {
             responseDTO.setRole(role);
             String userId = jwtUtil.extractUserId(token);
             responseDTO.setUserId(userId);
+            log.info("User {} successfully logged in with role {}. User ID: {}", loginDTO.email(), role, userId);
             return ResponseEntity.ok(responseDTO);
 
         } catch (UsernameNotFoundException | IllegalArgumentException e) {
             // Catches user not found or invalid credentials (invalid password)
+            log.warn("Login failed: Invalid credentials provided :" + (ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
