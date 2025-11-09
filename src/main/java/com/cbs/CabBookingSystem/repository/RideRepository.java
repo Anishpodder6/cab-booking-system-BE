@@ -30,7 +30,7 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
         WHERE r.driverId IS NULL 
         AND r.status NOT IN ('CancelledByUser', 'Ongoing', 'Completed') 
         AND FUNCTION('DATE', r.dateTime) = CURRENT_DATE
-        ORDER BY r.dateTime ASC
+        ORDER BY r.dateTime DESC
     """)
     List<Ride> findUnassignedRides();
 
@@ -44,7 +44,7 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
         WHERE r.userId = :userId 
         AND DATE(r.dateTime) = CURRENT_DATE 
         AND r.status NOT IN ('Completed', 'CancelledByUser')
-        ORDER BY r.dateTime ASC
+        ORDER BY r.dateTime DESC
     """)
     List<Ride> findRiderUpcomingRides(UUID userId);
 
@@ -57,8 +57,8 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
         SELECT r FROM Ride r 
         WHERE r.driverId = :userId 
         AND DATE(r.dateTime) = CURRENT_DATE 
-        AND r.status IN ('ConfirmedByDriver', 'Ongoing')
-        ORDER BY r.dateTime ASC
+        AND r.status IN ('ConfirmedByDriver', 'Ongoing', 'Completed')
+        ORDER BY r.dateTime DESC
     """)
     List<Ride> findDriverUpcomingRides(UUID userId);
 
@@ -72,6 +72,15 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
 
     @Query("SELECT r.status FROM Ride r WHERE r.rideId = :rideId")
     RideStatus findStatusByRideId(UUID rideId);
+
+    @Query("""
+        SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+        FROM Ride r
+        WHERE r.driverId = :driverId
+        AND r.status = 'Ongoing'
+        AND DATE(r.dateTime) = CURRENT_DATE
+    """)
+    boolean hasPreviousOngoingRide(UUID driverId);
 
 
     @Query("""

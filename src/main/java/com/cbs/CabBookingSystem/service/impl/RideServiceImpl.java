@@ -97,6 +97,7 @@ public class RideServiceImpl implements RideService {
                         if (isRideAssignedAlready) {
                             throw new AlreadyRideAssignedException("Ride is Already Assigned");
                         }
+
                         existingRide.setDriverId(driverID);
                         existingRide.setStatus(RideStatus.ConfirmedByDriver);
                     }
@@ -107,6 +108,19 @@ public class RideServiceImpl implements RideService {
                         newStatus = RideStatus.valueOf((String) value);
                     } catch (IllegalArgumentException e) {
                         throw new IllegalArgumentException("Invalid Ride Status: " + value);
+                    }
+
+                    if (existingRide.getDriverId() == null && (newStatus == RideStatus.Ongoing
+                            || newStatus == RideStatus.Completed||  newStatus == RideStatus.ConfirmedByDriver)
+                    ) {
+                        throw new IllegalStateException("Cannot update status without assigning a driver");
+                    }
+                    else if (existingRide.getDriverId() != null && newStatus == RideStatus.Ongoing) {
+                        boolean hasPreviousOngoingRide = rideRepository.hasPreviousOngoingRide(existingRide.getDriverId());
+
+                        if (hasPreviousOngoingRide) {
+                            throw new IllegalStateException("First Complete the ongoing ride");
+                        }
                     }
                     existingRide.setStatus(newStatus);
                 }
