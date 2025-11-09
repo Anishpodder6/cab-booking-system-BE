@@ -98,7 +98,7 @@ public class RideBookingController {
 
         Map<String, Long> carTypeCounts = rideService.getCarTypeRideCountForRider(userId);
 
-        if (carTypeCounts.isEmpty()) {
+        if (carTypeCounts == null || carTypeCounts.isEmpty()) {
             log.info("No car type ride history found for rider ID: {}", userId);
             return ResponseEntity.noContent().build();
         }
