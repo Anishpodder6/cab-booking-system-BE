@@ -4,8 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal; // Recommended for currency/price
 
+@Setter
+@Getter
 @Entity
 @Table(name = "carData")
 public class CarData {
@@ -28,32 +33,6 @@ public class CarData {
     public CarData(String id, String type, BigDecimal pricePerKm) {
         this.id = id;
         this.type = type;
-        this.pricePerKm = pricePerKm;
-    }
-
-    // --- Getters and Setters ---
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public BigDecimal getPricePerKm() {
-        return pricePerKm;
-    }
-
-    public void setPricePerKm(BigDecimal pricePerKm) {
         this.pricePerKm = pricePerKm;
     }
 
