@@ -1,0 +1,141 @@
+@startuml
+
+class BankingDetails {
+    - bankAccount : String
+    - routingNumber : String
+}
+
+class CarData {
+    - id : String
+    - type : String
+    - pricePerKm : BigDecimal
+}
+
+class PersonalDetails {
+    - firstName : String
+    - lastName : String
+    - email : String
+    - phone : String
+    - dateOfBirth : LocalDate
+    - password : String
+    - confirmPassword : String
+}
+
+class DriverDetails {
+    - licenseNumber : String
+    - licenseExpiry : LocalDate
+    - experience : Integer
+    - emergencyName : String
+    - emergencyPhone : String
+    - emergencyRelation : String
+}
+
+class VehicleDetails {
+    - vehicleNumber : String
+    - vehicleMake : String
+    - vehicleModel : String
+    - vehicleYear : Integer
+    - vehicleColor : String
+}
+
+class Driver {
+    - id : UUID
+    - personalDetails : PersonalDetails
+    - driverDetails : DriverDetails
+    - vehicleDetails : VehicleDetails
+    - bankingDetails : BankingDetails
+    - name : String
+    - driverRole : DriverRole
+    - status : DriverStatus
+    - role : UserRole
+    - createdAt : Instant
+    - updatedAt : Instant
+}
+
+class User {
+    - userId : UUID
+    - firstName : String
+    - lastName : String
+    - email : String
+    - phone : String
+    - passwordHash : String
+    - createdAt : LocalDateTime
+    - updatedAt : LocalDateTime
+    - role : UserRole
+    - todaySpent : Double
+    - todayRides : Integer
+    - rating : Double
+    - totalSpent : Double
+    - totalRides : Integer
+}
+
+class UserPrincipal {
+    - user : User
+}
+
+class Ride {
+    - rideId : UUID
+    - userId : UUID
+    - pickupLocation : String
+    - dropLocation : String
+    - driverId : UUID
+    - carType : String
+    - fare : Double
+    - status : RideStatus
+    - dateTime : LocalDateTime
+}
+
+class Rating {
+    - id : UUID
+    - userId : UUID
+    - driverId : UUID
+    - rating : Integer
+    - comments : String
+    - rideId : UUID
+}
+
+class Payment {
+    - paymentID : Long
+    - rideID : UUID
+    - userID : UUID
+    - pickupLocation : String
+    - dropLocation : String
+    - amount : Double
+    - method : String
+    - status : String
+    - timestamp : LocalDateTime
+}
+
+class RideWithRating {
+    - rideId : UUID
+    - userId : UUID
+    - pickupLocation : String
+    - dropLocation : String
+    - driverId : UUID
+    - carType : String
+    - fare : Double
+    - status : RideStatus
+    - dateTime : LocalDateTime
+    - rating : Rating
+}
+
+enum DriverRole
+enum DriverStatus
+enum UserRole
+enum RideStatus
+
+Driver "1" *-- "1" PersonalDetails
+Driver "1" *-- "1" DriverDetails
+Driver "1" *-- "1" VehicleDetails
+Driver "1" *-- "1" BankingDetails
+
+UserPrincipal "1" *-- "1" User
+
+Ride "1" o-- "1" Rating
+RideWithRating "1" o-- "1" Rating
+
+Driver ..|> UserDetails
+User ..|> UserDetails
+UserPrincipal ..|> UserDetails
+
+@enduml
