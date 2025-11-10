@@ -67,13 +67,13 @@ public class DriverController {
 
 
     //PUT Method in the Driver profile Section
-    @PutMapping("/{id}")
-    public ResponseEntity<DriverResponseDTO> updateDriver(@PathVariable UUID id, @RequestBody DriverUpdateDTO updateDTO) {
+    @PutMapping("/profile/{userId}")
+    public ResponseEntity<DriverResponseDTO> updateDriver(@PathVariable UUID userId, @RequestBody DriverUpdateDTO updateDTO) {
         // The service layer handles finding, updating, and returning the DTO
-        log.info("Request to update driver profile for ID: {}", id);
-        return driverService.updateDriverProfile(id, updateDTO)
-                .map(updatedDriverDTO -> new ResponseEntity<>(updatedDriverDTO, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        log.info("dto from controller " + updateDTO);
+        log.info("Request to update driver profile for ID: {}", userId);
+        return new ResponseEntity<>(driverService.updateDriverProfile(userId, updateDTO), HttpStatus.OK);
+
     }
 
     //GET Method in the Driver profile Section

@@ -8,6 +8,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.properties.TextAlignment;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,9 @@ public class PaymentService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     // Use PaymentDto for request and response
     public PaymentDto processNewPayment(PaymentDto requestDto) {
@@ -52,16 +56,56 @@ public class PaymentService {
         // 2. Business Logic: Set initial status and timestamp on the server side
         payment.setStatus("COMPLETED");
         payment.setTimestamp(LocalDateTime.now());
+        payment.setRecipientEmail(requestDto.getRecipientEmail());
 
         // 3. Save to database
         Payment savedPayment = paymentRepository.save(payment);
 
+//        try {
+//            sendPaymentReceiptEmail(savedPayment, requestDto.getRecipientEmail());
+//            System.out.println("Payment receipt email successfully sent to: " + requestDto.getRecipientEmail());
+//
+//        } catch (IOException e) {
+//
+//            System.err.println("CRITICAL ERROR: Failed to generate PDF receipt for payment ID "
+//                    + savedPayment.getPaymentID() + ". Error: " + e.getMessage());
+//        } catch (MessagingException e) {
+//            System.err.println("CRITICAL ERROR: Failed to send email for payment ID "
+//                    + savedPayment.getPaymentID() + ". Error: " + e.getMessage());
+//        }
+
         // 4. Convert saved Entity back to Response DTO (now PaymentDto)
         return mapToDto(savedPayment);
+
+    }
+
+    public Optional<Payment> getReceiptByPaymentId(UUID rideId) {
+        return paymentRepository.findByRideID(rideId);
+    }
+
+    public void sendPaymentReceiptEmail(Payment payment, String recipientEmail)
+            throws IOException, MessagingException {
+
+        // 1. Generate the PDF
+        byte[] pdfBytes = generatePaymentReceipt(payment);
+
+        // 2. Prepare email details
+        String filename = "receipt_" + payment.getRideID() + ".pdf";
+        String subject = "Your Cab Booking System Payment Receipt for Ride " + payment.getRideID();
+
+        // NOTE: In a real app, this body would be a professional HTML template.
+        String body = String.format("Dear Customer,<br><br>Thank you for your payment. " +
+                        "Please find your official receipt for Ride ID <b>%s</b> attached.<br><br>" +
+                        "Amount: INR %.2f<br>Date: %s<br><br>Vector Team",
+                payment.getRideID(),
+                payment.getAmount(),
+                payment.getTimestamp().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
+        // 3. Send the email
+        emailService.sendEmailWithAttachment(recipientEmail, subject, body, pdfBytes, filename);
     }
 
     // Use PaymentDto for response
-    public Optional<Payment> getReceiptByPaymentId(UUID rideId) {
+    public Optional<Payment> getReceiptByRideId(UUID rideId) {
         return paymentRepository.findByRideID(rideId);
 //                .map(this::mapToDto);
     }
@@ -137,6 +181,7 @@ public class PaymentService {
         // If not, remove the following lines
         dto.setPickupLocation(entity.getPickupLocation());
         dto.setDropLocation(entity.getDropLocation());
+        dto.setRecipientEmail(entity.getRecipientEmail());
         return dto;
     }
 }

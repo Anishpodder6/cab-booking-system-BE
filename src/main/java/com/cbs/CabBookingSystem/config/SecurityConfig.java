@@ -87,10 +87,10 @@ public class SecurityConfig {
                         // Public endpoints for registration and login (Auth Controller)
                         .requestMatchers("/v3/api-docs/**","/api/auth/**" , "/swagger-ui/**" , "/swagger-ui.html" , "/api/drivers/profile/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-//                        .requestMatchers("/rides/ws/**").permitAll()
+                        .requestMatchers("/rides/ws/**" , "api/payments/receipt/email/**").permitAll()
 
                         // Protected endpoints: must have a valid JWT and the correct role - role-based access control
-                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**" , "/api/ratings" , "/api/payments/receipt/**").hasRole("RIDER")
+                        .requestMatchers("/api/riders/**" , "/api/rides/rider/**" , "/api/ratings" , "/api/payments/receipt/**" , "/api/rides/rider/car-types/history/**").hasRole("RIDER")
                         .requestMatchers("/api/drivers/**" , "/api/rides/driver/**").hasRole("DRIVER")
 
                         // All other endpoints require authentication (valid JWT)

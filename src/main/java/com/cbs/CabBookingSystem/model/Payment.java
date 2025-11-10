@@ -23,6 +23,7 @@ public class Payment {
     private String method;
     private String status;
     private LocalDateTime timestamp;
+    private String recipientEmail;
 
     public Payment() {
         this.timestamp = LocalDateTime.now();

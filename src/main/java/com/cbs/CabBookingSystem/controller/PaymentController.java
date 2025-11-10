@@ -50,7 +50,7 @@ public class PaymentController {
     @GetMapping("/receipt/{rideId}")
     public ResponseEntity<?> getReceipt(@PathVariable UUID rideId) {
         // 1. Retrieve the Payment data
-        Optional<Payment> response = paymentService.getReceiptByPaymentId(rideId);
+        Optional<Payment> response = paymentService.getReceiptByRideId(rideId);
 
         if (response.isPresent()) {
             Payment payment = response.get();
@@ -83,6 +83,43 @@ public class PaymentController {
         } else {
             // 5. Handle Not Found case
             String errorMessage = "Receipt for ride ID " + rideId + " was not found.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
+        }
+    }
+
+    @GetMapping("/receipt/email/{rideId}")
+    public ResponseEntity<?> sendReceiptEmail(@PathVariable UUID rideId,
+                                              @RequestParam String email) {
+
+        // 1. Retrieve the Payment data
+        Optional<Payment> response = paymentService.getReceiptByRideId(rideId);
+
+        if (response.isPresent()) {
+            Payment payment = response.get();
+            try {
+                // 2. Generate and send the PDF receipt via email
+                // The service handles both PDF generation and mailing
+                paymentService.sendPaymentReceiptEmail(payment, email);
+
+                // 3. Return success response
+                String successMessage = "Receipt for ride ID " + rideId +
+                        " successfully sent to " + email + ".";
+                return ResponseEntity.ok(successMessage);
+
+            } catch (IOException e) {
+                // Handle PDF generation errors
+                log.error("Error generating PDF for rideId {}: {}", rideId, e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Error generating PDF receipt.");
+            } catch (jakarta.mail.MessagingException e) {
+                // Handle email sending errors
+                log.error("Error sending email for rideId {} to {}: {}", rideId, email, e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Error sending receipt email. Check server logs for details.");
+            }
+        } else {
+            // 4. Handle Not Found case
+            String errorMessage = "Payment data for ride ID " + rideId + " was not found.";
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
         }
     }

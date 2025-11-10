@@ -2,6 +2,7 @@ package com.cbs.CabBookingSystem.service;
 import com.cbs.CabBookingSystem.repository.PaymentRepository;
 import com.cbs.CabBookingSystem.repository.RatingRepository;
 import com.cbs.CabBookingSystem.repository.RideRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional; // Added for robustness
 import com.cbs.CabBookingSystem.dto.*;
 import com.cbs.CabBookingSystem.exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 import java.time.LocalDate;
 
 @Service
+@Slf4j
 public class DriverService {
 
     @Autowired
@@ -174,26 +176,31 @@ public class DriverService {
     }
 
     // FOR PUT in Drivers Profile
-    @Transactional
-    public Optional<DriverResponseDTO> updateDriverProfile(UUID id, DriverUpdateDTO updateDTO) {
+//    @Transactional
+    public DriverResponseDTO updateDriverProfile(UUID id, DriverUpdateDTO updateDTO) {
 
         Optional<Driver> driverOpt = driverRepository.findById(id);
 
         if (driverOpt.isEmpty()) {
-            return Optional.empty(); // Driver not found
+            log.warn("Driver with ID {} not found", id);
+            return null;
         }
 
         Driver driver = driverOpt.get();
 
         // --- 1. Update Personal Details ---
         PersonalDetails pd = driver.getPersonalDetails();
+        log.info("dto "+ updateDTO);
+        log.info("pd before "+ pd);
 
         if (updateDTO.getFirstName() != null) pd.setFirstName(updateDTO.getFirstName());
         if (updateDTO.getLastName() != null) pd.setLastName(updateDTO.getLastName());
-        driver.setName(updateDTO.getFirstName() + " " + updateDTO.getLastName());
+
+//        driver.setName(updateDTO.getFirstName() + " " + updateDTO.getLastName());
         if (updateDTO.getPhone() != null) pd.setPhone(updateDTO.getPhone());
         if (updateDTO.getDateOfBirth() != null) pd.setDateOfBirth(updateDTO.getDateOfBirth());
         driver.setPersonalDetails(pd);
+        log.info("pd after "+ pd);
 
         // --- 2. Update Driver Details ---
         DriverDetails dd = driver.getDriverDetails();
@@ -226,9 +233,13 @@ public class DriverService {
         }
 
         // The @PreUpdate method in the Driver entity handles the 'updatedAt' timestamp and 'name'
-        Driver updatedDriver = driverRepository.save(driver);
+        log.info("Updating Driver Profile: " + driver);
 
-        return Optional.of(convertToDto(updatedDriver));
+        Driver updatedDriver = driverRepository.save(driver);
+        Optional<DriverResponseDTO> driverResponseDTO = Optional.of(convertToDto(updatedDriver));
+        log.info("Driver Updated details" + driverResponseDTO.get());
+
+        return driverResponseDTO.get();
     }
 
     public DriverResponseDTO findUserById(UUID userId) {
@@ -282,7 +293,7 @@ public class DriverService {
 
                 // Weekly Goals (Goal values are hardcoded as they are administrative targets,
                 // but achieved values are now real)
-                .weeklyEarningsGoal(500.0) // Goal is an administrative target
+                .weeklyEarningsGoal(7500.0) // Goal is an administrative target
                 .weeklyEarningsAchieved(totalLifetimeEarnings) // Using Lifetime Earnings as a placeholder for a weekly metric
                 .weeklyRidesGoal(50)
                 .weeklyRidesAchieved(totalAcceptedRides != null ? totalAcceptedRides.intValue() : 0) // Total rides achieved
