@@ -72,8 +72,11 @@ public class DriverController {
         // The service layer handles finding, updating, and returning the DTO
         log.info("dto from controller " + updateDTO);
         log.info("Request to update driver profile for ID: {}", userId);
-        return new ResponseEntity<>(driverService.updateDriverProfile(userId, updateDTO), HttpStatus.OK);
-
+        DriverResponseDTO updated = driverService.updateDriverProfile(userId, updateDTO);
+        if (updated == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
     //GET Method in the Driver profile Section

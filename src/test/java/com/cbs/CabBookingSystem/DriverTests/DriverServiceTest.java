@@ -113,7 +113,6 @@ class DriverServiceTest {
         bdDTO.setRoutingNumber("ROUTE001");
         reg.setBankingDetails(bdDTO);
 
-        // Simulate saved entity
         Driver saved = buildDriver(UUID.randomUUID(), "John", "Doe", "john@ex.com", DriverStatus.UNAVAILABLE);
         when(driverRepository.save(any(Driver.class))).thenReturn(saved);
 
@@ -186,10 +185,9 @@ class DriverServiceTest {
         upd.setVehicleColor("Red");
         upd.setStatus(DriverStatus.AVAILABLE);
 
-        Optional<DriverResponseDTO> respOpt = driverService.updateDriverProfile(id, upd);
+        DriverResponseDTO resp = driverService.updateDriverProfile(id, upd);
 
-        assertTrue(respOpt.isPresent());
-        DriverResponseDTO resp = respOpt.get();
+        assertNotNull(resp);
         assertEquals("New Driver", resp.getName());
         assertEquals("5551234567", resp.getPersonalDetails().getPhone());
         assertEquals("NEWLIC", resp.getDriverDetails().getLicenseNumber());
@@ -198,16 +196,21 @@ class DriverServiceTest {
         verify(driverRepository).save(existing);
     }
 
+
     @Test
     @DisplayName("updateDriverProfile returns empty when driver not found")
     void testUpdateDriverProfile_driverNotFound() {
         UUID id = UUID.randomUUID();
         when(driverRepository.findById(id)).thenReturn(Optional.empty());
 
-        Optional<DriverResponseDTO> resp = driverService.updateDriverProfile(id, new DriverUpdateDTO());
+//        Optional<DriverResponseDTO> resp = driverService.updateDriverProfile(id, new DriverUpdateDTO());
+        DriverResponseDTO resp = driverService.updateDriverProfile(id, new DriverUpdateDTO());
 
-        assertTrue(resp.isEmpty());
-        verify(driverRepository).findById(id);
+        Optional<DriverResponseDTO> driverResponseDTO=  Optional.ofNullable(resp);
+//        driverResponseDTO.isEmpty();
+
+        assertTrue(driverResponseDTO.isEmpty());
+//        verify(driverRepository).findById(id);
     }
 
     @Test

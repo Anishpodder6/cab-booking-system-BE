@@ -115,7 +115,7 @@ class DriverControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /{id} - Should return OK on successful profile update")
+    @DisplayName("PUT /profile/{id} - Should return OK on successful profile update")
     void updateDriver_shouldReturnOkWhenSuccess() throws Exception {
         UUID driverId = UUID.randomUUID();
         DriverUpdateDTO updateDTO = new DriverUpdateDTO();
@@ -126,9 +126,10 @@ class DriverControllerTest {
         responseDTO.setId(driverId);
         responseDTO.setName("Updated Name");
 
-        when(driverService.updateDriverProfile(eq(driverId), any(DriverUpdateDTO.class))).thenReturn(Optional.of(responseDTO));
+        when(driverService.updateDriverProfile(eq(driverId), any(DriverUpdateDTO.class)))
+                .thenReturn(responseDTO);
 
-        mockMvc.perform(put("/api/drivers/" + driverId)
+        mockMvc.perform(put("/api/drivers/profile/" + driverId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
@@ -136,13 +137,17 @@ class DriverControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /{id} - Should return Not Found when driver to update does not exist")
+    @DisplayName("PUT /profile/{id} - Should return Not Found when driver to update does not exist")
     void updateDriver_shouldReturnNotFoundWhenDriverMissing() throws Exception {
         UUID driverId = UUID.randomUUID();
         DriverUpdateDTO updateDTO = new DriverUpdateDTO();
-        when(driverService.updateDriverProfile(eq(driverId), any(DriverUpdateDTO.class))).thenReturn(Optional.empty());
+        updateDTO.setFirstName("Updated");
+        updateDTO.setLastName("Name");
 
-        mockMvc.perform(put("/api/drivers/" + driverId)
+        when(driverService.updateDriverProfile(eq(driverId), any(DriverUpdateDTO.class)))
+                .thenReturn(null);
+
+        mockMvc.perform(put("/api/drivers/profile/" + driverId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isNotFound());
@@ -167,7 +172,8 @@ class DriverControllerTest {
     @DisplayName("GET /profile/{id} - Should return Not Found when driver does not exist")
     void getDriverAllDetails_shouldReturnNotFoundWhenMissing() throws Exception {
         UUID driverId = UUID.randomUUID();
-        when(driverService.findUserById(driverId)).thenThrow(new ResourceNotFoundException("Driver not found"));
+        when(driverService.findUserById(driverId))
+                .thenThrow(new ResourceNotFoundException("Driver not found"));
 
         mockMvc.perform(get("/api/drivers/profile/" + driverId))
                 .andExpect(status().isNotFound());
