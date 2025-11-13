@@ -32,4 +32,6 @@ public class RideDto {
 
     @NotNull
     RideStatus status;
+
+    String receipientEmail;
 }

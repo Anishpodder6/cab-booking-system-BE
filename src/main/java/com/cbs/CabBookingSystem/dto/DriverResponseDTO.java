@@ -5,6 +5,7 @@ import com.cbs.CabBookingSystem.model.DriverStatus;
 import lombok.Data;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -13,8 +14,8 @@ public class DriverResponseDTO {
     private DriverRole role;
     private DriverStatus status;
     private String name; // Derived field
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // Include nested DTOs, but use a response-safe version of PersonalDetails
     private PersonalDetailsResponseDTO personalDetails;

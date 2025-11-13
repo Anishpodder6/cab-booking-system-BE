@@ -16,7 +16,9 @@ import com.cbs.CabBookingSystem.service.RatingService;
 import com.cbs.CabBookingSystem.service.RideService;
 import com.cbs.CabBookingSystem.util.RideBookingUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate; // Specific import for pushing messages
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class RideServiceImpl implements RideService {
 
     private final RideRepository rideRepository;
@@ -41,12 +44,10 @@ public class RideServiceImpl implements RideService {
     /**
      * Helper method to push the updated Ride object to the client.
      * The destination must match the Angular client's subscription path.
-     * We use a generic '/topic/rides' prefix for simplicity, assuming the
-     * WebSocket configuration will route this correctly, matching the Angular client's URL.
      */
     private void pushRideUpdate(UUID rideId, Ride ride) {
-        // Matches Angular subscription topic: /topic/rides/{rideId}
         String destination = "/topic/rides/" + rideId;
+        log.info("Pushing ride update to WebSocket destination: {}", destination);
         messagingTemplate.convertAndSend(destination, ride);
     }
 
@@ -54,24 +55,34 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public Ride addRide(RideDto rideDto) {
+        log.info("Attempting to add new ride for user: {}", rideDto.getUserId());
 
-        if (!isUserExists(rideDto.getUserId())) throw new UserNotFound();
+        if (!isUserExists(rideDto.getUserId())) {
+            log.error("Failed to add ride. User not found: {}", rideDto.getUserId());
+            throw new UserNotFound(rideDto.getUserId());
+        }
 
         Ride newRide = modelMapper.map(rideDto, Ride.class);
 
         UUID id = UUID.randomUUID();
         newRide.setRideId(id);
-        // Set Looking For Driver Explicitly
         newRide.setStatus(RideStatus.LookingForDriver);
 
-        return rideRepository.save(newRide);
+        Ride savedRide = rideRepository.save(newRide);
+        log.info("New ride created successfully with ID: {}", id);
+        log.debug("New Ride Details: {}", savedRide);
+        return savedRide;
+
     }
 
     @Override
     public Ride getRideById(UUID rideId) throws RideNotFound {
-
-
-        return rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
+        log.info("Attempting to retrieve ride by ID: {}", rideId);
+        return rideRepository.findById(rideId)
+                .orElseThrow(() -> {
+                    log.error("Ride not found with ID: {}", rideId);
+                    return new RideNotFound("Ride with id " + rideId + " not found");
+                });
     }
 
 
@@ -84,7 +95,7 @@ public class RideServiceImpl implements RideService {
 
         // Fetch existing ride or throw if not found
         Ride existingRide = rideRepository.findById(rideId)
-        .orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
+                .orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
 
         String key = mp.keySet().iterator().next();
         Object value = mp.get(key);
@@ -133,9 +144,10 @@ public class RideServiceImpl implements RideService {
         return updatedRide;
     }
 
-
     private boolean isDriverExists(UUID driverId) {
-        return driverRepository.existsById(driverId);
+        boolean exists = driverRepository.existsById(driverId);
+        log.debug("Driver existence check for ID {}: {}", driverId, exists);
+        return exists;
     }
 
 
@@ -143,80 +155,105 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public List<Ride> getRiderUpcomingRide(UUID userId) {
-        return rideRepository.findRiderUpcomingRides(userId);
+        log.info("Fetching upcoming rides for rider ID: {}", userId);
+        List<Ride> rides = rideRepository.findRiderUpcomingRides(userId);
+        log.debug("Found {} upcoming rides for rider ID: {}", rides.size(), userId);
+        return rides;
     }
 
     @Override
     public List<Ride> getUnassignedRides() {
-        return rideRepository.findUnassignedRides();
+        log.info("Fetching all unassigned rides.");
+        List<Ride> rides = rideRepository.findUnassignedRides();
+        log.debug("Found {} unassigned rides.", rides.size());
+        return rides;
     }
 
     @Override
     public List<Ride> getDriverUpcomingRide(UUID userId) {
-        return rideRepository.findDriverUpcomingRides(userId);
+        log.info("Fetching upcoming rides for driver ID: {}", userId);
+        List<Ride> rides = rideRepository.findDriverUpcomingRides(userId);
+        log.debug("Found {} upcoming rides for driver ID: {}", rides.size(), userId);
+        return rides;
     }
 
 
     @Override
     public List<Ride> getAllRidesForUser(UUID userId) {
-        return rideRepository.findAllByUserId(userId);
+        log.info("Fetching all rides for user ID: {}", userId);
+        List<Ride> rides = rideRepository.findAllByUserId(userId);
+        log.debug("Found {} total rides for user ID: {}", rides.size(), userId);
+        return rides;
     }
 
 
     @Override
     public Boolean hasTwoRides(UUID userId) {
-        return rideRepository.countActiveRidesByUserId(userId) >= 2;
+        long activeCount = rideRepository.countActiveRidesByUserId(userId);
+        boolean hasTwo = activeCount >= 2;
+        log.debug("User {} has {} active rides. Result: {}", userId, activeCount, hasTwo);
+        return hasTwo;
     }
 
     @Override
     public RideStatus getRideStatus(UUID rideId) {
-        return rideRepository.findStatusByRideId(rideId);
+        RideStatus status = rideRepository.findStatusByRideId(rideId);
+        log.debug("Current status for ride {}: {}", rideId, status);
+        return status;
     }
 
     @Override
     public List<RideWithRating> getRiderHistory(UUID userId) {
+        log.info("Fetching ride history with ratings for rider ID: {}", userId);
         List<Ride> rideList =  rideRepository.findAllByUserIdOrderByDateTimeDesc(userId);
         List<RideWithRating> rideWithRatingList = new ArrayList<>();
 
         rideList.forEach(ride -> {
-            System.out.println("Got Ride" + ride);
+            log.debug("Processing ride {} for history.", ride.getRideId());
             Rating rating = ratingService.getRatingByRideId(ride.getRideId());
             RideWithRating rideWithRating = modelMapper.map(ride, RideWithRating.class);
             rideWithRating.setRating(rating);
             rideWithRatingList.add(rideWithRating);
         });
-
+        log.info("Finished processing {} rides for rider history.", rideList.size());
         return rideWithRatingList;
     }
 
     @Override
     public List<RideWithRating> getDriverHistory(UUID driverId) {
+        log.info("Fetching ride history with ratings for driver ID: {}", driverId);
         List<Ride> rideList =  rideRepository.findByDriverIdOrderByDateTimeDesc(driverId);
         List<RideWithRating> rideWithRatingList = new ArrayList<>();
 
         rideList.forEach(ride -> {
+            log.debug("Processing ride {} for driver history.", ride.getRideId());
             Rating rating = ratingService.getRatingByRideId(ride.getRideId());
             RideWithRating rideWithRating = modelMapper.map(ride, RideWithRating.class);
             rideWithRating.setRating(rating);
             rideWithRatingList.add(rideWithRating);
         });
-
+        log.info("Finished processing {} rides for driver history.", rideList.size());
         return rideWithRatingList;
     }
 
     @Override
     public Map<String, Long> getCarTypeRideCountForRider(UUID userId) {
+        log.info("Calculating car type ride count for rider ID: {}", userId);
         List<Ride> allRides = getAllRidesForUser(userId);
-        return allRides.stream()
-        .filter(ride -> ride.getCarType() != null && !ride.getCarType().trim().isEmpty())
-        .collect(Collectors.groupingBy(
-        Ride::getCarType,
-        Collectors.counting()
-        ));
+        Map<String, Long> carTypeCounts = allRides.stream()
+                .filter(ride -> ride.getCarType() != null && !ride.getCarType().trim().isEmpty())
+                .collect(Collectors.groupingBy(
+                        Ride::getCarType,
+                        Collectors.counting()
+                ));
+        log.debug("Car type counts: {}", carTypeCounts);
+        return carTypeCounts;
     }
 
     private boolean isUserExists(UUID userId) {
-        return userRepository.existsById(userId);
+        boolean exists = userRepository.existsById(userId);
+        log.debug("User existence check for ID {}: {}", userId, exists);
+        return exists;
     }
 
     private boolean canAssignDriver(UUID rideId, UUID driverId) {

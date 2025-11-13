@@ -45,4 +45,6 @@ public class Ride {
     @Column(updatable = false)
     private LocalDateTime dateTime;
 
+    private String receipientEmail;
+
 }

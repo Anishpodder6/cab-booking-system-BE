@@ -9,6 +9,7 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.properties.TextAlignment;
 import jakarta.mail.MessagingException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class PaymentService {
 
     @Autowired
@@ -30,8 +32,10 @@ public class PaymentService {
 
     // Use PaymentDto for request and response
     public PaymentDto processNewPayment(PaymentDto requestDto) {
+        log.info("Starting payment processing for Ride ID: {}", requestDto.getRideID());
 
         if (paymentRepository.existsByRideID(requestDto.getRideID())) {
+            log.warn("Payment already processed for ride ID: {}", requestDto.getRideID());
             throw new IllegalStateException("Payment already processed for ride ID: " + requestDto.getRideID());
         }
 
@@ -41,37 +45,32 @@ public class PaymentService {
         payment.setUserID(requestDto.getUserID());
         payment.setAmount(requestDto.getAmount());
         payment.setMethod(requestDto.getMethod());
-
-        // FIX: The original code had getters on the payment entity,
-        // which should be setters for setting values from the DTO.
-        // Assuming your Payment entity has setPickupLocation and setDropLocation
-        // and these fields were in your original PaymentRequestDto
-        // The Payment model must have these fields and setter methods.
-        // If not, you may remove these lines or update your Payment model.
-        // payment.getPickupLocation(requestDto.getPickupLocation()); // Original incorrect line
-        // payment.getDropLocation(requestDto.getDropLocation()); // Original incorrect line
         payment.setPickupLocation(requestDto.getPickupLocation());
         payment.setDropLocation(requestDto.getDropLocation());
 
         // 2. Business Logic: Set initial status and timestamp on the server side
         payment.setStatus("COMPLETED");
         payment.setTimestamp(LocalDateTime.now());
-        payment.setRecipientEmail(requestDto.getRecipientEmail());
+        payment.setReceipientEmail(requestDto.getReceipientEmail());
+        log.debug("Payment entity created: {}", payment);
+
 
         // 3. Save to database
         Payment savedPayment = paymentRepository.save(payment);
+        log.info("Payment successfully saved to DB with Payment ID: {}", savedPayment.getPaymentID());
+
 
 //        try {
-//            sendPaymentReceiptEmail(savedPayment, requestDto.getRecipientEmail());
-//            System.out.println("Payment receipt email successfully sent to: " + requestDto.getRecipientEmail());
+//            sendPaymentReceiptEmail(savedPayment, requestDto.getReceipientEmail());
+//            log.info("Payment receipt email successfully sent to: {}", requestDto.getReceipientEmail());
 //
 //        } catch (IOException e) {
+//            log.error("CRITICAL ERROR: Failed to generate PDF receipt for payment ID {}. Error: {}",
+//                    savedPayment.getPaymentID(), e.getMessage(), e);
 //
-//            System.err.println("CRITICAL ERROR: Failed to generate PDF receipt for payment ID "
-//                    + savedPayment.getPaymentID() + ". Error: " + e.getMessage());
 //        } catch (MessagingException e) {
-//            System.err.println("CRITICAL ERROR: Failed to send email for payment ID "
-//                    + savedPayment.getPaymentID() + ". Error: " + e.getMessage());
+//            log.error("CRITICAL ERROR: Failed to send email for payment ID {}. Error: {}",
+//                    savedPayment.getPaymentID(), e.getMessage(), e);
 //        }
 
         // 4. Convert saved Entity back to Response DTO (now PaymentDto)
@@ -80,41 +79,45 @@ public class PaymentService {
     }
 
     public Optional<Payment> getReceiptByPaymentId(UUID rideId) {
+        log.info("Attempting to retrieve payment receipt by Ride ID: {}", rideId);
         return paymentRepository.findByRideID(rideId);
     }
 
     public void sendPaymentReceiptEmail(Payment payment, String recipientEmail)
             throws IOException, MessagingException {
 
+        log.info("Preparing to send receipt for Payment ID {} to {}", payment.getPaymentID(), recipientEmail);
+
         // 1. Generate the PDF
         byte[] pdfBytes = generatePaymentReceipt(payment);
+        log.debug("PDF receipt generated successfully ({} bytes).", pdfBytes.length);
 
         // 2. Prepare email details
         String filename = "receipt_" + payment.getRideID() + ".pdf";
         String subject = "Your Cab Booking System Payment Receipt for Ride " + payment.getRideID();
 
-        // NOTE: In a real app, this body would be a professional HTML template.
         String body = String.format("Dear Customer,<br><br>Thank you for your payment. " +
                         "Please find your official receipt for Ride ID <b>%s</b> attached.<br><br>" +
                         "Amount: INR %.2f<br>Date: %s<br><br>Vector Team",
                 payment.getRideID(),
                 payment.getAmount(),
                 payment.getTimestamp().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
+
         // 3. Send the email
         emailService.sendEmailWithAttachment(recipientEmail, subject, body, pdfBytes, filename);
+        log.debug("Email service called for sending receipt.");
     }
 
     // Use PaymentDto for response
     public Optional<Payment> getReceiptByRideId(UUID rideId) {
+        log.info("Attempting to retrieve payment by Ride ID: {}", rideId);
         return paymentRepository.findByRideID(rideId);
-//                .map(this::mapToDto);
     }
 
 
     public byte[] generatePaymentReceipt(Payment payment) throws IOException {
-        // Use ByteArrayOutputStream to write PDF to memory
+        log.info("Generating PDF receipt for Payment ID: {}", payment.getPaymentID());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
 
         // iText specific objects: PdfWriter writes the PDF, PdfDocument wraps it
         try (PdfWriter writer = new PdfWriter(outputStream);
@@ -124,7 +127,6 @@ public class PaymentService {
             // --- 1. Title and Header ---
             document.add(new Paragraph("Vector - Official Receipt")
                     .setFontSize(20)
-//                    .setBold()
                     .setTextAlignment(TextAlignment.CENTER));
 
             document.add(new Paragraph("Receipt ID: " + payment.getPaymentID())
@@ -146,7 +148,7 @@ public class PaymentService {
             // --- 4. Financial Summary ---
             document.add(new Paragraph("\n--- Payment Summary ---").setFontSize(14));
             document.add(new Paragraph("Amount Paid: INR " + String.format("%.2f", payment.getAmount()))
-                    );
+            );
             document.add(new Paragraph("Payment Method: " + payment.getMethod()));
             document.add(new Paragraph("Status: " + payment.getStatus()));
 
@@ -156,11 +158,11 @@ public class PaymentService {
                     .setFontSize(10));
 
         } catch (Exception e) {
-            // Log error and rethrow as an IOException to be handled by the controller
-            System.err.println("iText PDF Generation Error: " + e.getMessage());
+            log.error("iText PDF Generation Error for Payment ID {}: {}", payment.getPaymentID(), e.getMessage(), e);
             throw new IOException("Failed to generate PDF receipt.", e);
         }
 
+        log.debug("PDF generation complete for Payment ID: {}", payment.getPaymentID());
         return outputStream.toByteArray();
     }
 
@@ -168,7 +170,7 @@ public class PaymentService {
      * Helper method to map Payment entity to PaymentDto
      */
     private PaymentDto mapToDto(Payment entity) {
-        // Use the new combined PaymentDto
+        log.debug("Mapping Payment entity to PaymentDto for ID: {}", entity.getPaymentID());
         PaymentDto dto = new PaymentDto();
         dto.setPaymentID(entity.getPaymentID());
         dto.setRideID(entity.getRideID());
@@ -177,11 +179,9 @@ public class PaymentService {
         dto.setMethod(entity.getMethod());
         dto.setStatus(entity.getStatus());
         dto.setTimestamp(entity.getTimestamp());
-        // Assuming these fields exist in your Payment entity
-        // If not, remove the following lines
         dto.setPickupLocation(entity.getPickupLocation());
         dto.setDropLocation(entity.getDropLocation());
-        dto.setRecipientEmail(entity.getRecipientEmail());
+        dto.setReceipientEmail(entity.getReceipientEmail());
         return dto;
     }
 }

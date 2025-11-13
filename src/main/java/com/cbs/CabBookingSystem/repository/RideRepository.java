@@ -34,6 +34,8 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
     """)
     List<Ride> findUnassignedRides();
 
+    List<Ride> findByDriverIdIsNullAndStatus(RideStatus status);
+
     /**
      * 2. Fetches upcoming rides for a specific rider (user).
      * Criteria: userId matches the requested userId AND rideStatus NOT IN ('CancelledByUser', 'Completed')

@@ -8,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -51,16 +52,16 @@ public class Driver implements UserDetails {
 
     // Timestamps
 //    @Temporal(TemporalType.INSTANT)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
 //    @Temporal(TemporalType.INSTANT)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     // Use JPA Lifecycle callbacks to manage timestamps and name
     @PrePersist
     protected void onCreate() {
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
         // Set 'name' on creation based on personal details
         if (personalDetails != null) {
             this.name = personalDetails.getFirstName() + " " + personalDetails.getLastName();
@@ -69,7 +70,7 @@ public class Driver implements UserDetails {
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = Instant.now();
+        this.updatedAt = LocalDateTime.now();
         // Update 'name' if details are changed
         if (personalDetails != null) {
             this.name = personalDetails.getFirstName() + " " + personalDetails.getLastName();

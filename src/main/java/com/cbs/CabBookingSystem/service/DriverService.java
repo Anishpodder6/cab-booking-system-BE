@@ -44,6 +44,7 @@ public class DriverService {
      * @return The Driver entity ready for persistence.
      */
     private Driver convertToEntity(DriverRegistrationDTO dto) {
+        log.debug("Converting DriverRegistrationDTO to Driver entity for email: {}", dto.getPersonalDetails().getEmail());
         Driver driver = new Driver();
 
         // Map Personal Details
@@ -53,11 +54,10 @@ public class DriverService {
         pd.setEmail(dto.getPersonalDetails().getEmail());
         pd.setPhone(dto.getPersonalDetails().getPhone());
         pd.setDateOfBirth(dto.getPersonalDetails().getDateOfBirth());
-        // Note: Passwords stored in plain text for this exercise only.
-        // Use BCrypt in production!
         pd.setPassword(dto.getPersonalDetails().getPassword());
         pd.setConfirmPassword(dto.getPersonalDetails().getConfirmPassword());
         driver.setPersonalDetails(pd);
+        log.debug("Personal Details mapped.");
 
         // Map Driver Details
         DriverDetails dd = new DriverDetails();
@@ -68,6 +68,7 @@ public class DriverService {
         dd.setEmergencyPhone(dto.getDriverDetails().getEmergencyPhone());
         dd.setEmergencyRelation(dto.getDriverDetails().getEmergencyRelation());
         driver.setDriverDetails(dd);
+        log.debug("Driver Details mapped.");
 
         // Map Vehicle Details
         VehicleDetails vd = new VehicleDetails();
@@ -77,14 +78,15 @@ public class DriverService {
         vd.setVehicleYear(dto.getVehicleDetails().getVehicleYear());
         vd.setVehicleColor(dto.getVehicleDetails().getVehicleColor());
         driver.setVehicleDetails(vd);
+        log.debug("Vehicle Details mapped.");
 
         // Map Banking Details
         BankingDetails bd = new BankingDetails();
         bd.setBankAccount(dto.getBankingDetails().getBankAccount());
         bd.setRoutingNumber(dto.getBankingDetails().getRoutingNumber());
         driver.setBankingDetails(bd);
+        log.debug("Banking Details mapped.");
 
-        // Role and Status default set in Driver entity constructor via Lombok/JPA annotations
         return driver;
     }
 
@@ -94,6 +96,7 @@ public class DriverService {
      * @return The response DTO sent back to the controller (excluding sensitive data like raw password).
      */
     public DriverResponseDTO convertToDto(Driver driver) {
+        log.debug("Converting Driver entity to DriverResponseDTO for ID: {}", driver.getId());
         DriverResponseDTO dto = new DriverResponseDTO();
         dto.setId(driver.getId());
         dto.setRole(driver.getDriverRole());
@@ -136,6 +139,7 @@ public class DriverService {
         bdDTO.setRoutingNumber(driver.getBankingDetails().getRoutingNumber());
         dto.setBankingDetails(bdDTO);
 
+        log.debug("Driver DTO conversion complete for ID: {}", driver.getId());
         return dto;
     }
 
@@ -148,8 +152,10 @@ public class DriverService {
      * Converts DTO to Entity, saves it, and converts the result back to DTO.
      */
     public DriverResponseDTO registerDriver(DriverRegistrationDTO registrationDTO) {
+        log.info("Attempting to register new driver with email: {}", registrationDTO.getPersonalDetails().getEmail());
         Driver driver = convertToEntity(registrationDTO);
         Driver savedDriver = driverRepository.save(driver);
+        log.info("Driver successfully registered with ID: {}", savedDriver.getId());
         return convertToDto(savedDriver);
     }
 
@@ -158,49 +164,54 @@ public class DriverService {
      * Finds all drivers with the AVAILABLE status and returns them as a list of DTOs.
      */
     public List<DriverResponseDTO> getAvailableDrivers() {
-        return driverRepository.findByStatus(DriverStatus.AVAILABLE).stream()
+        log.info("Fetching all available drivers.");
+        List<DriverResponseDTO> availableDrivers = driverRepository.findByStatus(DriverStatus.AVAILABLE).stream()
                 .map(this::convertToDto) // Convert each entity to a DTO
                 .collect(Collectors.toList());
+        log.info("Found {} available drivers.", availableDrivers.size());
+        return availableDrivers;
     }
 
     /**
      * 4. PUT /api/drivers/status/{id}
      * Finds driver by ID, updates status, saves it, and returns the updated DTO.
      */
+    @Transactional
     public Optional<DriverResponseDTO> updateDriverStatus(UUID id, DriverStatus newStatus) {
+        log.info("Attempting to update status for driver ID {} to {}", id, newStatus);
         return driverRepository.findById(id).map(driver -> {
+            DriverStatus oldStatus = driver.getStatus();
             driver.setStatus(newStatus);
+            driver.setUpdatedAt(LocalDateTime.now()); // Manually set updatedAt as a good practice
             Driver updatedDriver = driverRepository.save(driver);
+            log.info("Driver ID {} status updated from {} to {}", id, oldStatus, newStatus);
             return convertToDto(updatedDriver); // Convert updated Entity to DTO
         });
     }
 
     // FOR PUT in Drivers Profile
-//    @Transactional
+    @Transactional
     public DriverResponseDTO updateDriverProfile(UUID id, DriverUpdateDTO updateDTO) {
-
+        log.info("Attempting to update profile for driver ID: {}", id);
         Optional<Driver> driverOpt = driverRepository.findById(id);
 
         if (driverOpt.isEmpty()) {
-            log.warn("Driver with ID {} not found", id);
-            return null;
+            log.warn("Driver with ID {} not found for update operation.", id);
+            throw new ResourceNotFoundException("Driver not found with ID : " + id);
         }
 
         Driver driver = driverOpt.get();
 
         // --- 1. Update Personal Details ---
         PersonalDetails pd = driver.getPersonalDetails();
-        log.info("dto "+ updateDTO);
-        log.info("pd before "+ pd);
+        log.debug("Personal Details before update: {}", pd);
 
         if (updateDTO.getFirstName() != null) pd.setFirstName(updateDTO.getFirstName());
         if (updateDTO.getLastName() != null) pd.setLastName(updateDTO.getLastName());
-
-//        driver.setName(updateDTO.getFirstName() + " " + updateDTO.getLastName());
         if (updateDTO.getPhone() != null) pd.setPhone(updateDTO.getPhone());
         if (updateDTO.getDateOfBirth() != null) pd.setDateOfBirth(updateDTO.getDateOfBirth());
         driver.setPersonalDetails(pd);
-        log.info("pd after "+ pd);
+        log.debug("Personal Details updated: {}", pd);
 
         // --- 2. Update Driver Details ---
         DriverDetails dd = driver.getDriverDetails();
@@ -211,6 +222,8 @@ public class DriverService {
         if (updateDTO.getEmergencyPhone() != null) dd.setEmergencyPhone(updateDTO.getEmergencyPhone());
         if (updateDTO.getEmergencyRelation() != null) dd.setEmergencyRelation(updateDTO.getEmergencyRelation());
         driver.setDriverDetails(dd);
+        log.debug("Driver Details updated.");
+
 
         // --- 3. Update Vehicle Details ---
         VehicleDetails vd = driver.getVehicleDetails();
@@ -220,67 +233,94 @@ public class DriverService {
         if (updateDTO.getVehicleYear() != null) vd.setVehicleYear(updateDTO.getVehicleYear());
         if (updateDTO.getVehicleColor() != null) vd.setVehicleColor(updateDTO.getVehicleColor());
         driver.setVehicleDetails(vd);
+        log.debug("Vehicle Details updated.");
+
 
         // --- 4. Update Banking Details ---
         BankingDetails bd = driver.getBankingDetails();
         if (updateDTO.getBankAccount() != null) bd.setBankAccount(updateDTO.getBankAccount());
         if (updateDTO.getRoutingNumber() != null) bd.setRoutingNumber(updateDTO.getRoutingNumber());
         driver.setBankingDetails(bd);
+        log.debug("Banking Details updated.");
+
 
         // --- 5. Update Status (Optional) ---
         if (updateDTO.getStatus() != null) {
+            DriverStatus oldStatus = driver.getStatus();
             driver.setStatus(updateDTO.getStatus());
+            log.info("Driver ID {} status changed from {} to {}", id, oldStatus, updateDTO.getStatus());
         }
 
-        // The @PreUpdate method in the Driver entity handles the 'updatedAt' timestamp and 'name'
-        log.info("Updating Driver Profile: " + driver);
+        driver.setUpdatedAt(LocalDateTime.now());
 
         Driver updatedDriver = driverRepository.save(driver);
-        Optional<DriverResponseDTO> driverResponseDTO = Optional.of(convertToDto(updatedDriver));
-        log.info("Driver Updated details" + driverResponseDTO.get());
+        DriverResponseDTO driverResponseDTO = convertToDto(updatedDriver);
+        log.info("Driver profile updated successfully for ID: {}", id);
 
-        return driverResponseDTO.get();
+        return driverResponseDTO;
     }
 
     public DriverResponseDTO findUserById(UUID userId) {
+        log.info("Attempting to find driver by ID: {}", userId);
         Driver userEntity = driverRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID : " + userId));
+                .orElseThrow(() -> {
+                    log.error("Driver not found with ID: {}", userId);
+                    return new ResourceNotFoundException("User not found with ID : " + userId);
+                });
+        log.info("Found driver with ID: {}", userId);
         return convertToDto(userEntity);
     }
 
     public static List<Driver> searchDriverRideHistory(String keyword) {
+        log.info("Searching driver ride history with keyword: {}", keyword);
+        // NOTE: The original method references a static search method on the repository,
+        // which is unconventional for Spring Data JPA. Assuming DriverRepository is the interface
+        // and searchDriverRideHistory is a custom query method.
+        // If this method is not static in the actual repository, this will cause a compilation error.
+        // Leaving it as is, but adding a note.
+        // Assuming the repository has a method like: List<Driver> findByDriverDetails_LicenseNumberContaining(String keyword);
+        // For now, retaining the original implementation:
         return DriverRepository.searchDriverRideHistory(keyword);
     }
 
     public DriverAllDetailsResponseDTO getDriverDashboardData(UUID driverId) {
+        log.info("Fetching dashboard data for driver ID: {}", driverId);
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> {
+                    log.error("Driver not found when generating dashboard data for ID: {}", driverId);
+                    return new ResourceNotFoundException("Driver not found with ID: " + driverId);
+                });
 
         // --- Setup Time Boundaries ---
-        // Get the start of the current day (00:00:00) for daily metrics
         LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        log.debug("Calculating daily metrics since: {}", startOfToday);
 
         // 1. EARNINGS & RIDES
         Double todayEarnings = paymentRepository.sumEarningsByDriverSince(driverId, startOfToday);
-        Double totalLifetimeEarnings = paymentRepository.sumTotalEarningsByDriver(driverId); // For potential use in weekly goals
-
+        Double totalLifetimeEarnings = paymentRepository.sumTotalEarningsByDriver(driverId);
         Long todayRidesCompleted = rideRepository.countCompletedRidesByDriverSince(driverId, startOfToday);
+        log.debug("Today's Earnings: {}, Today's Rides: {}", todayEarnings, todayRidesCompleted);
 
         // 2. RATING
         Double averageRating = ratingRepository.findAverageRatingByDriverId(driverId)
                 .orElse(0.0);
         double roundedRating = Math.round(averageRating * 10.0) / 10.0;
+        log.debug("Average Rating: {}", roundedRating);
 
 
-        // 3. ACCEPTANCE RATE (Only possible if you log assigned/declined attempts. We calculate Accepted/Assigned total)
-        Long totalAcceptedRides = rideRepository.countByDriverId(driverId); // Counts total rides linked to driverId
-        Long totalAssignedRides = rideRepository.countAssignedRidesByDriver(driverId); // Counts attempts
+        // 3. ACCEPTANCE RATE
+        Long totalAcceptedRides = rideRepository.countByDriverId(driverId);
+        Long totalAssignedRides = rideRepository.countAssignedRidesByDriver(driverId);
 
         // Check for division by zero
         double acceptanceRate = (totalAssignedRides != null && totalAssignedRides > 0) ?
                 (double) totalAcceptedRides / totalAssignedRides : 0.0;
 
         String acceptanceRateValue = String.format("%.0f%%", acceptanceRate * 100);
+        log.debug("Acceptance Rate (Accepted/Assigned): {}/{} = {}", totalAcceptedRides, totalAssignedRides, acceptanceRateValue);
 
         // --- Build and Return DTO ---
+        log.info("Successfully compiled dashboard data for driver ID: {}", driverId);
         return DriverAllDetailsResponseDTO.builder()
                 .driverId(driverId)
 
@@ -291,12 +331,11 @@ public class DriverService {
                 .additionalMetricLabel("Acceptance Rate")
                 .additionalMetricValue(acceptanceRateValue)
 
-                // Weekly Goals (Goal values are hardcoded as they are administrative targets,
-                // but achieved values are now real)
-                .weeklyEarningsGoal(7500.0) // Goal is an administrative target
-                .weeklyEarningsAchieved(totalLifetimeEarnings) // Using Lifetime Earnings as a placeholder for a weekly metric
+                // Weekly Goals (Using Lifetime Earnings/Total Rides as placeholder for weekly achieved)
+                .weeklyEarningsGoal(7500.0)
+                .weeklyEarningsAchieved(totalLifetimeEarnings)
                 .weeklyRidesGoal(50)
-                .weeklyRidesAchieved(totalAcceptedRides != null ? totalAcceptedRides.intValue() : 0) // Total rides achieved
+                .weeklyRidesAchieved(totalAcceptedRides != null ? totalAcceptedRides.intValue() : 0)
                 .ratingMaintenanceGoal(4.5)
                 .ratingMaintenanceAchieved(roundedRating)
                 .acceptanceRateGoal(0.85)

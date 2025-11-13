@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,8 +71,8 @@ class DriverServiceTest {
 
         d.setStatus(status);
         d.setDriverRole(DriverRole.DRIVER);
-        d.setCreatedAt(Instant.now());
-        d.setUpdatedAt(Instant.now());
+        d.setCreatedAt(LocalDateTime.now());
+        d.setUpdatedAt(LocalDateTime.now());
         d.setName(firstName + " " + lastName);
         return d;
     }

@@ -30,7 +30,7 @@ public class EmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
         // ⚠️ You should configure a 'from' address in application.properties or set it here
-         helper.setFrom("anishpodder6@gmail.com");
+        helper.setFrom("anishpodder6@gmail.com");
 
         helper.setTo(to);
         helper.setSubject(subject);

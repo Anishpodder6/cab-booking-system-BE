@@ -80,7 +80,8 @@ class RideServiceImplTest {
         null,
         "Sedan",
         25.0,
-        RideStatus.LookingForDriver
+        RideStatus.LookingForDriver,
+                "anish@gmail.com"
         );
     }
 

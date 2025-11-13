@@ -38,6 +38,6 @@ public class PaymentDto {
     @NotNull(message = "Drop location is required")
     private String dropLocation;
 
-    private String recipientEmail;
+    private String receipientEmail;
 
 }
