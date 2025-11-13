@@ -39,6 +39,40 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         .setAllowedOrigins("http://localhost:4200")
         .withSockJS(); // Crucial for cross-browser compatibility
     }
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+
+                // Check for the type of STOMP command/frame
+                switch (accessor.getCommand()) {
+                    case CONNECT:
+                        System.out.println(">> STOMP CONNECT: A client is attempting to connect.");
+                        // You would put your JWT authentication logic here
+                        break;
+                    case SUBSCRIBE:
+                        String destination = accessor.getDestination();
+                        String sessionId = accessor.getSessionId();
+                        // If you set the User principal, you could use accessor.getUser().getName()
+                        System.out.println(">> STOMP SUBSCRIBE: Session **" + sessionId + "** subscribing to **" + destination + "**");
+                        break;
+                    case DISCONNECT:
+                        // This event is often triggered when the WebSocket connection closes
+                        System.out.println(">> STOMP DISCONNECT: Session **" + accessor.getSessionId() + "** disconnecting.");
+                        break;
+                    default:
+                        // Other commands like SEND, MESSAGE, UNSUBSCRIBE, HEARTBEAT, etc.
+                        break;
+                }
+                // Your authentication logic (uncommented part of your original code) goes here
+                // ... (authentication logic)
+
+                return message;
+            }
+        });
+    }
 
 //    @Override
 //    public void configureClientInboundChannel(ChannelRegistration registration) {
