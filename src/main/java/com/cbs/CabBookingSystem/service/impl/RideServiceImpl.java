@@ -14,9 +14,9 @@ import com.cbs.CabBookingSystem.repository.RideRepository;
 import com.cbs.CabBookingSystem.repository.UserRepository;
 import com.cbs.CabBookingSystem.service.RatingService;
 import com.cbs.CabBookingSystem.service.RideService;
+import com.cbs.CabBookingSystem.util.RideBookingUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate; // Specific import for pushing messages
 import org.springframework.stereotype.Service;
 
@@ -36,6 +36,7 @@ public class RideServiceImpl implements RideService {
     private final RatingService ratingService;
     private final SimpMessagingTemplate messagingTemplate; // <-- Injected for WebSocket communication
     private final ModelMapper modelMapper;
+    private final RideBookingUtil rideBookingUtil;
 
     /**
      * Helper method to push the updated Ride object to the client.
@@ -60,6 +61,9 @@ public class RideServiceImpl implements RideService {
 
         UUID id = UUID.randomUUID();
         newRide.setRideId(id);
+        // Set Looking For Driver Explicitly
+        newRide.setStatus(RideStatus.LookingForDriver);
+
         return rideRepository.save(newRide);
     }
 
@@ -73,69 +77,62 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public Ride patchRideData(Map<String, Object> mp, UUID rideId) throws RideNotFound {
-        Ride existingRide = rideRepository.findById(rideId).orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
+        // Allow only one field update at a time
+        if (mp.size() != 1) {
+            throw new IllegalArgumentException("Only one field can be updated at a time");
+        }
 
-        mp.forEach((key, value) -> {
-            switch (key) {
-                case "driverId" -> {
-                    if (value == null || "null".equalsIgnoreCase(String.valueOf(value))) {
-                        existingRide.setDriverId(null); // explicitly set to null
-                    } else {
-                        UUID driverID;
+        // Fetch existing ride or throw if not found
+        Ride existingRide = rideRepository.findById(rideId)
+        .orElseThrow(() -> new RideNotFound("Ride with id " + rideId + " not found"));
 
-                        // Check if driverId is uuid and assign to variable
-                        try {
-                            driverID = UUID.fromString((String) value);
-                        } catch (IllegalArgumentException e) {
-                            throw new IllegalArgumentException("Invalid Driver ID format: " + value);
-                        }
+        String key = mp.keySet().iterator().next();
+        Object value = mp.get(key);
 
-                        if(!isDriverExists(driverID)) throw new DriverNotFound(driverID);
-                        // Check if driverId is actually changing to prevent unnecessary exception
-                        boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
-
-                        if (isRideAssignedAlready) {
-                            throw new AlreadyRideAssignedException("Ride is Already Assigned");
-                        }
-
-                        existingRide.setDriverId(driverID);
-                        existingRide.setStatus(RideStatus.ConfirmedByDriver);
-                    }
+        switch (key) {
+            case "driverId" -> {
+                // Validate driverId and check if driver exists
+                if (value == null || "null".equalsIgnoreCase(String.valueOf(value))) {
+                    throw new IllegalArgumentException("driverId cannot be null");
                 }
-                case "status" -> {
-                    RideStatus newStatus;
-                    try {
-                        newStatus = RideStatus.valueOf((String) value);
-                    } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException("Invalid Ride Status: " + value);
-                    }
+                UUID driverID = rideBookingUtil.extractUUID((String) value);
 
-                    if (existingRide.getDriverId() == null && (newStatus == RideStatus.Ongoing
-                            || newStatus == RideStatus.Completed||  newStatus == RideStatus.ConfirmedByDriver)
-                    ) {
-                        throw new IllegalStateException("Cannot update status without assigning a driver");
-                    }
-                    else if (existingRide.getDriverId() != null && newStatus == RideStatus.Ongoing) {
+                if (!isDriverExists(driverID)) throw new DriverNotFound(driverID);
+
+                if (canAssignDriver(rideId, driverID))  {
+                    // Assign driver and update status
+                    existingRide.setDriverId(driverID);
+                    existingRide.setStatus(RideStatus.ConfirmedByDriver);
+                }
+            }
+            case "status" -> {
+                // Validate and update ride status
+                RideStatus newStatus = rideBookingUtil.extractRideStatus((String) value);
+
+                if (rideBookingUtil.canChangeRideStatus(existingRide, newStatus)) {
+                    if (existingRide.getDriverId() != null && newStatus == RideStatus.Ongoing) {
                         boolean hasPreviousOngoingRide = rideRepository.hasPreviousOngoingRide(existingRide.getDriverId());
-
                         if (hasPreviousOngoingRide) {
-                            throw new IllegalStateException("First Complete the ongoing ride");
+                            throw new IllegalStateException("First complete the ongoing ride");
                         }
                     }
                     existingRide.setStatus(newStatus);
+
+                    // Remove driver if cancelled by driver
+                    if (newStatus == RideStatus.CancelledByDriver) {
+                        existingRide.setDriverId(null);
+                    }
                 }
-
-                default -> throw new IllegalStateException("Unexpected value: " + key);
             }
-        });
+            default -> throw new IllegalArgumentException("Unexpected value: " + key);
+        }
 
+        // Save and push update
         Ride updatedRide = rideRepository.save(existingRide);
-
-        // REACTIVE UPDATE: Push the change
         pushRideUpdate(rideId, updatedRide);
-
         return updatedRide;
     }
+
 
     private boolean isDriverExists(UUID driverId) {
         return driverRepository.existsById(driverId);
@@ -220,6 +217,19 @@ public class RideServiceImpl implements RideService {
 
     private boolean isUserExists(UUID userId) {
         return userRepository.existsById(userId);
+    }
+
+    private boolean canAssignDriver(UUID rideId, UUID driverId) {
+        boolean isRideAssignedAlready = rideRepository.existsByRideIdAndDriverIdIsNotNull(rideId);
+        if (isRideAssignedAlready) {
+            throw new AlreadyRideAssignedException("Ride is Already Assigned");
+        }
+        boolean isHavingTwoActiveRides = rideRepository.countActiveRidesByDriverId(driverId) >= 2;
+
+        if (isHavingTwoActiveRides) {
+            throw new IllegalStateException("Driver cannot have more than two active rides");
+        }
+        return true;
     }
 
 }

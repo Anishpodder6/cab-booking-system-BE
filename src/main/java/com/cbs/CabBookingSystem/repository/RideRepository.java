@@ -65,9 +65,18 @@ public interface RideRepository extends JpaRepository<Ride, UUID> {
     @Query("""
         SELECT COUNT(r) FROM Ride r
         WHERE r.userId = :userId
+        AND DATE(r.dateTime) = CURRENT_DATE
         AND r.status NOT IN ('Completed', 'CancelledByUser')
     """)
     Long countActiveRidesByUserId(UUID userId);
+
+    @Query("""
+        SELECT COUNT(r) FROM Ride r
+        WHERE r.driverId = :driverId
+        AND DATE(r.dateTime) = CURRENT_DATE
+        AND r.status IN ('ConfirmedByDriver', 'Ongoing')
+    """)
+    Long countActiveRidesByDriverId(UUID driverId);
 
 
     @Query("SELECT r.status FROM Ride r WHERE r.rideId = :rideId")
