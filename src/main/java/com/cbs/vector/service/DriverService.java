@@ -171,10 +171,7 @@ public class DriverService {
         return availableDrivers;
     }
 
-    /**
-     * 4. PUT /api/drivers/status/{id}
-     * Finds driver by ID, updates status, saves it, and returns the updated DTO.
-     */
+
     @Transactional
     public Optional<DriverResponseDTO> updateDriverStatus(UUID id, DriverStatus newStatus) {
         log.info("Attempting to update status for driver ID {} to {}", id, newStatus);

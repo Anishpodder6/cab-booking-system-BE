@@ -53,7 +53,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             userEmail = jwtUtil.extractUsername(jwt);
         } catch (Exception e) {
             // Log the exception, but continue the filter chain
-            System.err.println("JWT processing error: " + e.getMessage());
             filterChain.doFilter(request, response);
             return;
         }
